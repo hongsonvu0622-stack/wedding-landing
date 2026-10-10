@@ -27,7 +27,7 @@ export function readGuestRef(loc: { pathname: string; search: string }): GuestRe
   return looksLikeId(q) ? { id: q, freeText: null } : { id: null, freeText: q }
 }
 
-export async function fetchGuestName(id: string, fetchImpl: typeof fetch = fetch, timeoutMs = 4000): Promise<string | null> {
+export async function fetchGuestName(id: string, fetchImpl: typeof fetch = fetch, timeoutMs = 10_000): Promise<string | null> {
   const ctrl = new AbortController()
   const timer = setTimeout(() => ctrl.abort(), timeoutMs)
   try {

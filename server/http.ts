@@ -1,5 +1,5 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import type { HttpResult } from './handlers'
+import type { HttpResult } from './handlers.js'
 
 export function send(res: ServerResponse, r: HttpResult): void {
   res.statusCode = r.status
@@ -18,4 +18,17 @@ export async function readJson(req: IncomingMessage & { body?: unknown }, limit 
     chunks.push(c as Buffer)
   }
   return JSON.parse(Buffer.concat(chunks).toString('utf8'))
+}
+
+export interface RsvpRequestHeaders { contentType?: string; origin?: string; host?: string }
+
+// Blocks cross-site "simple" requests (text/plain forms) and browser requests from other origins.
+export function checkRsvpRequest(h: RsvpRequestHeaders): HttpResult | null {
+  if (!/^application\/json\b/i.test(h.contentType ?? '')) return { status: 415, body: { error: 'Unsupported content type' } }
+  if (h.origin) {
+    let originHost: string | null = null
+    try { originHost = new URL(h.origin).host } catch { /* invalid origin */ }
+    if (!originHost || originHost !== h.host) return { status: 403, body: { error: 'Forbidden' } }
+  }
+  return null
 }

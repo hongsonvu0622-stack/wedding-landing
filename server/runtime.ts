@@ -1,5 +1,5 @@
-import { createHandlers } from './handlers'
-import { createSheetsApi, readSheetsEnv } from './sheets'
+import { createHandlers } from './handlers.js'
+import { createSheetsApi, readSheetsEnv } from './sheets.js'
 
 let handlers: ReturnType<typeof createHandlers> | undefined
 

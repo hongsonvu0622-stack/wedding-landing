@@ -99,3 +99,37 @@ describe('wishes', () => {
     expect(await createHandlers(api).wishes()).toEqual({ status: 200, body: [] })
   })
 })
+
+describe('rsvp abuse limits', () => {
+  const good = { name: 'Anh Minh', attending: true, companions: 0, message: 'Chúc mừng' }
+  test('allows 5 submissions per IP per 10 minutes, then answers 429 without writing', async () => {
+    const api = fakeApi()
+    let t = 0
+    const h = createHandlers(api, { now: () => t })
+    for (let i = 0; i < 5; i++) expect((await h.rsvp(good, { ip: '1.1.1.1' })).status).toBe(200)
+    expect((await h.rsvp(good, { ip: '1.1.1.1' })).status).toBe(429)
+    expect(api.appended).toHaveLength(5)
+    expect((await h.rsvp(good, { ip: '2.2.2.2' })).status).toBe(200)
+    t = 10 * 60_000 + 1
+    expect((await h.rsvp(good, { ip: '1.1.1.1' })).status).toBe(200)
+  })
+  test('has a global ceiling of 100 submissions per hour across IPs', async () => {
+    const api = fakeApi()
+    const h = createHandlers(api, { now: () => 0 })
+    for (let i = 0; i < 100; i++) expect((await h.rsvp(good, { ip: `10.0.0.${i}` })).status).toBe(200)
+    expect((await h.rsvp(good, { ip: '10.9.9.9' })).status).toBe(429)
+  })
+  test('the wish wall hides messages containing links or domains (stored, never shown)', async () => {
+    const api = fakeApi({
+      getResponseRows: async () => [
+        ['Tên khách', 'Tham dự', 'Số người', 'Lời nhắn', 'Thời gian'],
+        ['A', 'Có', '1', 'Chuyển khoản mừng cưới tại https://evil.example/pay', 't1'],
+        ['B', 'Có', '1', 'xem www.evil.vn nhé', 't2'],
+        ['C', 'Có', '1', 'đặt tại evil.com/x', 't3'],
+        ['D', 'Có', '1', 'Trăm năm hạnh phúc', 't4'],
+      ],
+    })
+    const r = await createHandlers(api).wishes()
+    expect(r.body).toEqual([{ name: 'D', message: 'Trăm năm hạnh phúc', at: 't4' }])
+  })
+})

@@ -68,3 +68,22 @@ describe('fetchGuestName', () => {
   })
   test('DEFAULT_GUEST is the polite fallback', () => expect(DEFAULT_GUEST).toBe('Quý khách'))
 })
+
+describe('fetchGuestName default timeout', () => {
+  test('waits long enough for a cold server (server-side Google timeout is 8s)', async () => {
+    vi.useFakeTimers()
+    try {
+      let resolve!: (v: unknown) => void
+      const f = vi.fn((_u: string, init?: RequestInit) => new Promise((r, rej) => {
+        resolve = r
+        init?.signal?.addEventListener('abort', () => rej(new Error('abort')))
+      }))
+      const p = fetchGuestName('abc', f as unknown as typeof fetch)
+      await vi.advanceTimersByTimeAsync(9000)
+      resolve({ ok: true, json: async () => ({ name: 'Chị Lan' }) })
+      expect(await p).toBe('Chị Lan')
+    } finally {
+      vi.useRealTimers()
+    }
+  })
+})
