@@ -9,3 +9,29 @@ export function validateRsvp(p: RsvpPayload): Partial<Record<'name' | 'companion
   if (p.message.length > 500) e.message = 'Lời chúc tối đa 500 ký tự.'
   return e
 }
+
+export interface Wish { name: string; message: string; at: string }
+export interface RsvpClient { submit(p: RsvpPayload): Promise<void>; wishes(): Promise<Wish[]> }
+
+export function createApiClient(fetchImpl: typeof fetch = fetch): RsvpClient {
+  return {
+    async submit(p) {
+      const res = await fetchImpl('/api/rsvp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(p),
+      })
+      if (!res.ok) throw new Error(`RSVP failed (${res.status})`)
+    },
+    async wishes() {
+      try {
+        const res = await fetchImpl('/api/wishes')
+        if (!res.ok) return []
+        const data = await res.json()
+        return Array.isArray(data) ? data : []
+      } catch {
+        return []
+      }
+    },
+  }
+}

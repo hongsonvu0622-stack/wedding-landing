@@ -14,6 +14,9 @@ import { Cinematic } from './sections/Cinematic'
 import { Story } from './sections/Story'
 import { Events } from './sections/Events'
 import { Gallery } from './sections/Gallery'
+import { Rsvp } from './sections/Rsvp'
+import { Gift } from './sections/Gift'
+import { Footer } from './sections/Footer'
 import { useReveal } from './hooks/useReveal'
 
 export function App() {
@@ -49,7 +52,10 @@ export function App() {
         <Story />
         <Events />
         <Gallery />
+        <Rsvp />
+        <Gift />
       </main>
+      <Footer />
     </>
   )
 }
