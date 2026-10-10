@@ -1,7 +1,12 @@
 import { render, screen } from '@testing-library/react'
+import { afterEach, beforeEach } from 'vitest'
 import userEvent from '@testing-library/user-event'
 import { Events } from './Events'
 import * as ics from '../lib/ics'
+
+// Fixed clock: 70 days 4 hours before the first event, so countdown cells (70/04/00/00) never collide with the dates 19 and 20.
+beforeEach(() => { vi.useFakeTimers({ toFake: ['Date'] }); vi.setSystemTime(new Date('2026-10-10T00:00:00Z')) })
+afterEach(() => { vi.useRealTimers() })
 
 test('shows both events with their dates and times', () => {
   render(<Events />)
@@ -34,5 +39,5 @@ test('countdown renders four non-negative numeric cells', () => {
   render(<Events />)
   const nums = Array.from(document.querySelectorAll('#cd strong')).map((n) => Number(n.textContent))
   expect(nums).toHaveLength(4)
-  nums.forEach((n) => expect(n).toBeGreaterThanOrEqual(0))
+  expect(nums).toEqual([70, 4, 0, 0])
 })

@@ -13,6 +13,7 @@ import { Families } from './sections/Families'
 import { Cinematic } from './sections/Cinematic'
 import { Story } from './sections/Story'
 import { Events } from './sections/Events'
+import { Gallery } from './sections/Gallery'
 import { useReveal } from './hooks/useReveal'
 
 export function App() {
@@ -47,6 +48,7 @@ export function App() {
         <Cinematic />
         <Story />
         <Events />
+        <Gallery />
       </main>
     </>
   )
