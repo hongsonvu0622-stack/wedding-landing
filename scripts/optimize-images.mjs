@@ -3,7 +3,7 @@
 //   npm run photos:all           toàn bộ ảnh trong thư mục nguồn
 //   --force                      làm lại cả ảnh đã có
 //   --quality=80                 chất lượng WebP (mặc định 80)
-//   --src=public/asset           thư mục ảnh gốc (mặc định public/asset)
+//   --src=source/asset           thư mục ảnh gốc (mặc định source/asset)
 // Ảnh gốc không bao giờ bị sửa. Ảnh trong "fix" (đã chỉnh) được ưu tiên hơn "file le fix".
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -15,7 +15,7 @@ const opt = (name, fallback) => args.find((a) => a.startsWith(`--${name}=`))?.sp
 
 const WIDTHS = [640, 1280, 2000]
 const QUALITY = Number(opt('quality', 80))
-const SRC = opt('src', 'public/asset')
+const SRC = opt('src', 'source/asset')
 const OUT = 'public/img'
 const force = flag('force')
 const all = flag('all')
@@ -91,6 +91,16 @@ for (const id of ids) {
   console.log(`ok ${id}  ${w}x${h}  [${widths.join(' / ')}]  từ ${path.relative('.', src)}`)
 }
 
+if (!all) {
+  // Xoá WebP của ảnh không còn trong danh sách để không đưa ảnh thừa lên web.
+  const keep = new Set(ids)
+  let pruned = 0
+  for (const f of await fs.readdir(OUT)) {
+    const m = f.match(/^(\d+)-\d+\.webp$/)
+    if (m && !keep.has(m[1])) { await fs.unlink(path.join(OUT, f)); pruned++ }
+  }
+  if (pruned) console.log(`đã xoá ${pruned} file WebP không dùng`)
+}
 await fs.writeFile('src/generated/photos.json', JSON.stringify(manifest, null, 2) + '\n')
 console.log('')
 console.log(`${ids.length} ảnh · tạo mới ${built} file, bỏ qua ${skipped} file đã có`)
