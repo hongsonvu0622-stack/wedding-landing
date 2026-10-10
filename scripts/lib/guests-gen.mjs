@@ -28,6 +28,20 @@ export function slugify(name, max = 30) {
   return s
 }
 
+// Tạo một ID chưa dùng (và ghi nó vào `used`): tên không dấu + hậu tố ngẫu nhiên.
+export function makeId(name, { used, suffixLength = 5, random = randomInt }) {
+  const slug = slugify(name) || 'khach'
+  for (let attempt = 0; ; attempt++) {
+    if (attempt >= MAX_ATTEMPTS) throw new Error(`Không tạo được ID duy nhất cho "${name}" sau ${MAX_ATTEMPTS} lần thử`)
+    const suffix = Array.from({ length: suffixLength }, () => ALPHABET[random(ALPHABET.length)]).join('')
+    const id = `${slug}-${suffix}`
+    if (!used.has(id)) {
+      used.add(id)
+      return id
+    }
+  }
+}
+
 const keyOf = (raw) => String(raw).replace(/\s+/g, ' ').trim().toLowerCase()
 
 // lines: các dòng tên gốc. state: { ids: { "<tên gốc>#<lần thứ n>": id } } để giữ nguyên ID đã phát khi chạy lại.
@@ -49,15 +63,8 @@ export function generate(lines, { base, state = { ids: {} }, suffixLength = 5, e
     let id = ids[key]
     const reused = id !== undefined
     if (!reused) {
-      const slug = slugify(name) || 'khach'
-      for (let attempt = 0; ; attempt++) {
-        if (attempt >= MAX_ATTEMPTS) throw new Error(`Không tạo được ID duy nhất cho "${name}" sau ${MAX_ATTEMPTS} lần thử`)
-        const suffix = Array.from({ length: suffixLength }, () => ALPHABET[random(ALPHABET.length)]).join('')
-        id = `${slug}-${suffix}`
-        if (!used.has(id)) break
-      }
+      id = makeId(name, { used, suffixLength, random })
       ids[key] = id
-      used.add(id)
     }
     rows.push({ id, name, note, link: `${root}/${id}`, reused })
   }

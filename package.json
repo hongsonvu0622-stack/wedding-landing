@@ -14,7 +14,8 @@
     "build:server": "esbuild server/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist-server/main.mjs --log-level=warning",
     "start": "node dist-server/main.mjs",
     "brand": "node scripts/make-brand-assets.mjs",
-    "guests": "node scripts/gen-guests.mjs"
+    "guests": "esbuild scripts/guests.ts --bundle --platform=node --target=node22 --format=esm --outfile=data/.guests.mjs --log-level=error && node --env-file=.env.local data/.guests.mjs",
+    "guests:file": "node scripts/gen-guests.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",

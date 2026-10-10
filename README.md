@@ -7,31 +7,25 @@
 - RSVP ghi vào tab `Responses` (Tên khách, Tham dự, Số người, Lời nhắn, Thời gian). "Số người" là tổng số người đến (1 + số người đi cùng), 0 nếu không tham dự.
 - Bí mật: copy `.env.example` thành `.env.local` và điền `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `GOOGLE_SHEET_ID`. Chia sẻ Sheet cho email tài khoản dịch vụ với quyền chỉnh sửa. Không bao giờ commit `.env.local`.
 
-## Tạo ID và link mời cho khách (chạy ở máy bạn)
+## Tạo ID và link mời cho khách (chạy ở máy bạn, ghi thẳng vào Google Sheet)
 
-Thay cho công thức Google Sheet. Tạo tệp `data/names.txt` (thư mục `data/` không đưa lên git), mỗi dòng một tên gốc:
-
-```
-A Thành
-C Oanh
-A Kiên(*)
-Thu Hoàng
-```
-
-Chạy:
+Lệnh đọc tab "khách mời" qua `.env.local`, cấp ID cho những khách chưa có và điền ô Link:
 
 ```bash
-npm run guests -- data/names.txt --copy
+npm run guests                    # XEM TRƯỚC: chỉ in ra sẽ làm gì, chưa ghi gì vào Sheet
+npm run guests -- --apply         # ghi thật
+npm run guests -- --apply --clean-names   # ghi thật và sửa cột Name: "A Thành" -> "Anh Thành"
 ```
 
-Kết quả (cũng nằm trong `data/guests-out.tsv`) gồm 4 cột: `ID`, `Name`, `Link mời`, `Ghi chú`. Mở tab "khách mời" trong Sheet, chọn ô `A1` và dán (Cmd+V).
+- ID có dạng `anh-thanh-83h8f`: tên không dấu, nối bằng `-`, thêm 5 ký tự ngẫu nhiên (bỏ `i`, `l`, `o`, `0`, `1`).
+- **Không bao giờ đổi một ID hợp lệ đã có** (link có thể đã gửi). Chỉ điền ô ID trống, thay ID không hợp lệ (có dấu cách, có dấu) và ID bị trùng. Chạy lại nhiều lần vẫn an toàn.
+- **Không bao giờ ghi đè ô đang là công thức** (ví dụ cột "Link mời" là `="https://.../"&A2`). Ô ID là công thức thì bị bỏ qua và báo lại.
+- Khi `--apply`: lưu bản sao lưu vào `data/backup-*.json` trước, dừng nếu Sheet vừa bị người khác sửa, ghi từng lô 100 ô, rồi đọc lại kiểm tra từng ô.
+- `--clean-names` đổi `A`/`C` đầu tên thành `Anh`/`Chị` và bỏ `(*)` (để vào cột "Ghi chú" nếu tab có cột này). Tên gốc còn trong tệp sao lưu.
+- Tuỳ chọn: `--tab="khách mời"`, `--base=https://...`, `--suffix=5` (3 đến 9), `--no-expand`.
+- Sau khi ghi, máy chủ cập nhật danh sách khách sau khoảng 20 giây.
 
-- `A`/`C` đứng đầu tên được đổi thành `Anh`/`Chị`; `(*)` được bỏ khỏi cột Name và để ở cột "Ghi chú". Thêm `--no-expand` nếu không muốn đổi `A`/`C`.
-- ID có dạng `anh-thanh-cruh2`: tên không dấu, nối bằng `-`, thêm 5 ký tự ngẫu nhiên (bỏ `i`, `l`, `o`, `0`, `1` cho khỏi nhầm).
-- **ID đã phát được nhớ** trong `data/guests-state.json`: chạy lại với danh sách dài hơn thì người cũ giữ nguyên ID, chỉ người mới có ID mới. Đổi thứ tự dòng cũng không làm đổi ID. Nếu bạn **sửa chữ** của một dòng thì dòng đó được ID mới.
-- Hai dòng trùng tên (ví dụ hai `A Minh`) được hai ID khác nhau.
-- Tuỳ chọn: `--base=https://...` (mặc định `SITE_URL` hoặc `https://wedding.hson.io.vn`), `--suffix=5` (từ 3 đến 9), `--no-header`, `--out=...`, `--state=...`.
-- Đừng dán đè lên các dòng đã gửi link cho khách nếu danh sách mới có ID khác: link cũ sẽ không tra ra tên nữa.
+Có một chế độ phụ không cần Sheet: `npm run guests:file -- data/names.txt --copy` đọc danh sách tên từ tệp, xuất bảng ID, Name, Link để dán vào Sheet.
 
 ## Triển khai trên VM bằng Docker
 
