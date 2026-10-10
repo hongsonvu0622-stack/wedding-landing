@@ -15,3 +15,4 @@ reference
 *.md
 Dockerfile
 docker-compose.yml
+data

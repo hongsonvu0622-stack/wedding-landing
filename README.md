@@ -7,6 +7,32 @@
 - RSVP ghi vào tab `Responses` (Tên khách, Tham dự, Số người, Lời nhắn, Thời gian). "Số người" là tổng số người đến (1 + số người đi cùng), 0 nếu không tham dự.
 - Bí mật: copy `.env.example` thành `.env.local` và điền `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `GOOGLE_SHEET_ID`. Chia sẻ Sheet cho email tài khoản dịch vụ với quyền chỉnh sửa. Không bao giờ commit `.env.local`.
 
+## Tạo ID và link mời cho khách (chạy ở máy bạn)
+
+Thay cho công thức Google Sheet. Tạo tệp `data/names.txt` (thư mục `data/` không đưa lên git), mỗi dòng một tên gốc:
+
+```
+A Thành
+C Oanh
+A Kiên(*)
+Thu Hoàng
+```
+
+Chạy:
+
+```bash
+npm run guests -- data/names.txt --copy
+```
+
+Kết quả (cũng nằm trong `data/guests-out.tsv`) gồm 4 cột: `ID`, `Name`, `Link mời`, `Ghi chú`. Mở tab "khách mời" trong Sheet, chọn ô `A1` và dán (Cmd+V).
+
+- `A`/`C` đứng đầu tên được đổi thành `Anh`/`Chị`; `(*)` được bỏ khỏi cột Name và để ở cột "Ghi chú". Thêm `--no-expand` nếu không muốn đổi `A`/`C`.
+- ID có dạng `anh-thanh-cruh2`: tên không dấu, nối bằng `-`, thêm 5 ký tự ngẫu nhiên (bỏ `i`, `l`, `o`, `0`, `1` cho khỏi nhầm).
+- **ID đã phát được nhớ** trong `data/guests-state.json`: chạy lại với danh sách dài hơn thì người cũ giữ nguyên ID, chỉ người mới có ID mới. Đổi thứ tự dòng cũng không làm đổi ID. Nếu bạn **sửa chữ** của một dòng thì dòng đó được ID mới.
+- Hai dòng trùng tên (ví dụ hai `A Minh`) được hai ID khác nhau.
+- Tuỳ chọn: `--base=https://...` (mặc định `SITE_URL` hoặc `https://wedding.hson.io.vn`), `--suffix=5` (từ 3 đến 9), `--no-header`, `--out=...`, `--state=...`.
+- Đừng dán đè lên các dòng đã gửi link cho khách nếu danh sách mới có ID khác: link cũ sẽ không tra ra tên nữa.
+
 ## Triển khai trên VM bằng Docker
 
 Một ảnh Docker duy nhất chạy cả web lẫn API (Node) và mở một cổng; HTTPS, tên miền và nén dữ liệu do Kong/NAT phía trước lo.
