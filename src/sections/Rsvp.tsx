@@ -80,7 +80,7 @@ export function Rsvp({ client }: { client?: RsvpClient }) {
             )}
             <div>
               <label htmlFor="rsvp-msg">Lời chúc</label>
-              <textarea id="rsvp-msg" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Gửi đôi lời chúc đến cô dâu chú rể" />
+              <textarea id="rsvp-msg" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Gửi lời chúc đến cô dâu chú rể" />
               {errors.message && <div className="err">{errors.message}</div>}
             </div>
             {status === 'error' && <div className="err" role="alert">Chưa gửi được. Bạn kiểm tra mạng và thử lại nhé, nội dung vẫn được giữ nguyên.</div>}

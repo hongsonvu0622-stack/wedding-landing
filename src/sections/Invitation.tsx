@@ -13,7 +13,7 @@ export function Invitation() {
       <div>
         <div className="eyebrow rv">Thư mời</div>
         <h2 className="h2 rv d1" style={{ marginTop: 14 }}>
-          <span className="s1">Hạnh Phúc Trọn Vẹn</span><span className="s2">Khi Có Bạn</span>
+          <span className="s1">Hạnh Phúc</span><span className="s2">Khi Có Bạn</span>
         </h2>
         <p className="lead rv d2">{wedding.invitation.lead}</p>
         <div className="sign rv d3">Sơn <span style={{ fontSize: '.7em' }}>&amp;</span> Lan</div>

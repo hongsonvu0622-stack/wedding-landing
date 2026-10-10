@@ -5,7 +5,8 @@
 .hero::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(30,35,24,.35) 0%,rgba(30,35,24,0) 35%,rgba(30,35,24,.72) 100%)}
 .hero .in{position:absolute;z-index:2;left:0;right:0;bottom:0;padding:0 clamp(20px,5vw,72px) clamp(40px,8vh,80px)}
 .hero .top{position:absolute;z-index:2;top:0;left:0;right:0;display:flex;justify-content:space-between;padding:28px clamp(20px,5vw,72px);font-size:12px;letter-spacing:.3em;text-transform:uppercase}
-.names{font-family:var(--script);font-weight:400;font-size:clamp(64px,11vw,170px);line-height:1.02;letter-spacing:0;text-shadow:0 2px 24px rgba(30,35,24,.35)}
+.names{font-family:var(--script);font-weight:400;font-size:clamp(50px,13vw,170px);line-height:1.02;letter-spacing:0;text-shadow:0 2px 24px rgba(30,35,24,.35)}
+@media(min-width:801px){.names{font-size:clamp(64px,11vw,170px)}}
 .names .amp{color:var(--gold-l);margin:0 .12em 0 0;display:inline}
 .names .b{display:block}
 .names .b.r{text-align:left;padding-left:clamp(24px,18%,300px)}
