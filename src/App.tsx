@@ -10,6 +10,8 @@ import { Hero } from './sections/Hero'
 import { Marquee } from './sections/Marquee'
 import { Invitation } from './sections/Invitation'
 import { Families } from './sections/Families'
+import { Cinematic } from './sections/Cinematic'
+import { Story } from './sections/Story'
 import { useReveal } from './hooks/useReveal'
 
 export function App() {
@@ -41,6 +43,8 @@ export function App() {
         <Marquee />
         <Invitation />
         <Families />
+        <Cinematic />
+        <Story />
       </main>
     </>
   )
