@@ -6,6 +6,10 @@ import { Nav } from './components/Nav'
 import { useGuestName } from './hooks/useGuestName'
 import { useMusic } from './hooks/useMusic'
 import { useParallax } from './hooks/useParallax'
+import { Hero } from './sections/Hero'
+import { Marquee } from './sections/Marquee'
+import { Invitation } from './sections/Invitation'
+import { Families } from './sections/Families'
 import { useReveal } from './hooks/useReveal'
 
 export function App() {
@@ -32,7 +36,12 @@ export function App() {
       <MusicButton playing={music.playing} onToggle={() => void music.toggle()} />
       <audio ref={music.ref} src={wedding.musicSrc} loop preload="none" />
       <Nav />
-      <main>{/* sections are mounted here by Tasks 7-11 */}</main>
+      <main>
+        <Hero />
+        <Marquee />
+        <Invitation />
+        <Families />
+      </main>
     </>
   )
 }
