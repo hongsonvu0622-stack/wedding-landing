@@ -1,0 +1,16 @@
+{
+  "name": "wedding-son-lan",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "photos": "node scripts/optimize-images.mjs",
+    "photos:all": "node scripts/optimize-images.mjs --all"
+  },
+  "devDependencies": {
+    "sharp": "^0.35.5"
+  },
+  "dependencies": {
+    "google-auth-library": "^11.2.0"
+  }
+}
