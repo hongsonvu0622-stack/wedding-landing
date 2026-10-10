@@ -1,4 +1,4 @@
-import { JWT } from 'google-auth-library'
+import { createFetchRequest, createTokenProvider } from './google-auth.js'
 
 export interface SheetsEnv { email: string; privateKey: string; sheetId: string; guestTab: string; responseTab: string }
 
@@ -56,8 +56,7 @@ export type SheetsRequest = (o: { url: string; method?: 'GET' | 'POST'; params?:
 const BASE = 'https://sheets.googleapis.com/v4/spreadsheets'
 
 function defaultRequest(env: SheetsEnv): SheetsRequest {
-  const auth = new JWT({ email: env.email, key: env.privateKey, scopes: ['https://www.googleapis.com/auth/spreadsheets'] })
-  return (o) => auth.request({ url: o.url, method: o.method ?? 'GET', params: o.params, data: o.data, timeout: 8000 }) as Promise<{ data: any }>
+  return createFetchRequest(createTokenProvider({ email: env.email, privateKey: env.privateKey }))
 }
 
 export function createSheetsApi(env: SheetsEnv, request: SheetsRequest = defaultRequest(env)): SheetsApi {
