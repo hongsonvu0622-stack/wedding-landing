@@ -9,20 +9,22 @@
 
 ## Triển khai trên VM bằng Docker
 
-Một ảnh Docker duy nhất chạy cả web lẫn API (Node), phía trước là Caddy lo HTTPS tự động và nén dữ liệu.
+Một ảnh Docker duy nhất chạy cả web lẫn API (Node) và mở một cổng; HTTPS, tên miền và nén dữ liệu do Kong/NAT phía trước lo.
 
-1. VM cần Docker và Docker Compose; mở cổng 80 và 443 trên tường lửa. Muốn có HTTPS thì trỏ bản ghi DNS `A` của tên miền về IP của VM.
+1. VM cần Docker và Docker Compose.
 2. Lấy mã và tạo tệp cấu hình:
    ```bash
    git clone git@github.com:hongsonvu0622-stack/wedding-landing.git && cd wedding-landing
    cp .env.example .env
-   nano .env      # điền GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, GOOGLE_SHEET_ID, DOMAIN
+   nano .env      # điền GOOGLE_SERVICE_ACCOUNT_EMAIL, GOOGLE_PRIVATE_KEY, GOOGLE_SHEET_ID
+   chmod 600 .env
    ```
-   `DOMAIN` ví dụ `thiep.example.com`; để trống thì chạy HTTP qua IP của VM. Khoá riêng tư dán trên một dòng, giữ nguyên `\n`.
+   Khoá riêng tư dán trên một dòng, giữ nguyên `\n`. `APP_PORT` là cổng mở ra VM (mặc định 3000). `TRUSTED_PROXY_HOPS=1` khi có đúng một proxy (Kong) đứng trước; đặt 0 nếu truy cập thẳng.
 3. Chạy: `docker compose up -d --build`
-4. Kiểm tra: `docker compose ps` (cả hai dịch vụ `healthy`/`running`), `docker compose logs -f app`.
-5. Cập nhật phiên bản mới: `git pull && docker compose up -d --build`.
+4. Kiểm tra: `docker compose ps` (trạng thái `healthy`), `docker compose logs -f app`, `curl http://localhost:3000/healthz` trả về `ok`.
+5. Trỏ Kong/NAT vào `http://<IP của VM>:3000`. Kong cần chuyển tiếp các header `Host` và `X-Forwarded-For`.
+6. Cập nhật phiên bản mới: `git pull && docker compose up -d --build`.
 
-Lưu ý: tệp `.env` chứa khoá bí mật, không commit và chỉ để quyền đọc cho người dùng triển khai (`chmod 600 .env`). Cổng 3000 của ứng dụng không mở ra ngoài, chỉ Caddy truy cập được.
+Lưu ý: tệp `.env` chứa khoá bí mật, không commit. Ứng dụng không tự nén dữ liệu và không tự có HTTPS, hãy bật nén (gzip) ở Kong nếu muốn trang tải nhanh hơn.
 
 Chạy thử không cần Docker: `npm run build && npm run build:server && node --env-file=.env.local dist-server/main.mjs`.

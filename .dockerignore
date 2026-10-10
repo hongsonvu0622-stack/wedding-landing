@@ -15,4 +15,3 @@ reference
 *.md
 Dockerfile
 docker-compose.yml
-Caddyfile

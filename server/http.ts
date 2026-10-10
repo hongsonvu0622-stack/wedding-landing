@@ -32,3 +32,20 @@ export function checkRsvpRequest(h: RsvpRequestHeaders): HttpResult | null {
   }
   return null
 }
+
+// Real client address for rate limiting. Only the entries added by our own proxies are trustworthy:
+// with `hops` trusted proxies in front, that is the hops-th entry from the end of X-Forwarded-For.
+export function clientIp(
+  headers: { 'x-forwarded-for'?: string | string[] },
+  remoteAddress: string | undefined,
+  hops = 1,
+): string {
+  const xff = headers['x-forwarded-for']
+  const raw = Array.isArray(xff) ? xff.join(',') : xff
+  if (hops > 0 && raw) {
+    const parts = raw.split(',').map((s) => s.trim()).filter(Boolean)
+    const ip = parts[parts.length - hops] ?? parts[0]
+    if (ip) return ip
+  }
+  return remoteAddress || 'unknown'
+}

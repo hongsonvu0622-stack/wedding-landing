@@ -1,6 +1,0 @@
-# DOMAIN trong file .env: ví dụ thiep.example.com (Caddy tự lấy chứng chỉ HTTPS).
-# Để trống hoặc ":80" nếu chỉ chạy HTTP bằng IP của VM.
-{$DOMAIN::80} {
-	encode zstd gzip
-	reverse_proxy app:3000
-}

@@ -1,6 +1,6 @@
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { getHandlers } from '../server/runtime.js'
-import { checkRsvpRequest, readJson, send } from '../server/http.js'
+import { checkRsvpRequest, clientIp, readJson, send } from '../server/http.js'
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
   if (req.method !== 'POST') return send(res, { status: 405, body: { error: 'Method not allowed' } })
@@ -11,7 +11,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     host: (h['x-forwarded-host'] as string | undefined) ?? h.host,
   })
   if (rejected) return send(res, rejected)
-  const ip = ((h['x-forwarded-for'] as string | undefined)?.split(',')[0].trim()) || req.socket.remoteAddress || 'unknown'
+  const ip = clientIp({ 'x-forwarded-for': h['x-forwarded-for'] }, req.socket.remoteAddress, Number(process.env.TRUSTED_PROXY_HOPS ?? 1))
   let body: unknown
   try {
     body = await readJson(req)
