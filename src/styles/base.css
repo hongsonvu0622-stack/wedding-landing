@@ -22,3 +22,6 @@ a{color:inherit}
 
 p,.lead{text-wrap:pretty}
 .who,.row h3,.q p,.fam .head p,.sign,.two .v{text-wrap:balance}
+
+body{font-variant-numeric:lining-nums;font-feature-settings:'lnum' 1}
+.cd strong,.two .dt,.row .no,.arch .num{font-variant-numeric:lining-nums tabular-nums;font-feature-settings:'lnum' 1,'tnum' 1}
