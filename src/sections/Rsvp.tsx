@@ -3,6 +3,7 @@ import { wedding } from '../config/wedding.config'
 import { Photo } from '../components/Photo'
 import { useGuestName } from '../hooks/useGuestName'
 import { DEFAULT_GUEST } from '../lib/guests'
+import { WishWall } from './WishWall'
 import { createApiClient, validateRsvp, type RsvpClient, type Wish } from '../lib/rsvp'
 
 type Status = 'idle' | 'sending' | 'done' | 'error'
@@ -89,13 +90,7 @@ export function Rsvp({ client }: { client?: RsvpClient }) {
           </form>
         )}
       </div>
-      {wishes.length > 0 && (
-        <div className="wishes">
-          {wishes.slice(0, 6).map((w, i) => (
-            <blockquote key={`${w.at}-${i}`}>{w.message}<cite>{w.name}</cite></blockquote>
-          ))}
-        </div>
-      )}
+      <WishWall wishes={wishes} />
     </section>
   )
 }
