@@ -1,0 +1,22 @@
+#curtain{position:fixed;inset:0;z-index:100;display:flex;pointer-events:auto}
+#curtain .p{flex:1;background:var(--night);transition:transform 1.6s var(--ease)}
+#curtain .p.l{margin-right:-1px}#curtain .p{background:radial-gradient(120% 90% at 50% 45%,#2A3022 0%,var(--night) 62%)}#curtain .p.r{background:radial-gradient(120% 90% at 50% 45%,#2A3022 0%,var(--night) 62%);background-position:-100vw 0}
+#curtain .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;color:var(--bg);padding:24px;transition:opacity .6s}
+#curtain .mono{font-family:var(--script);font-size:clamp(72px,11vw,128px);color:var(--gold);line-height:1.05}
+#curtain .to{font-family:var(--serif);font-style:italic;font-size:clamp(26px,4vw,44px);margin:10px 0 18px;font-weight:300}
+#curtain .eyebrow{margin-bottom:4px}
+#curtain .frame{position:absolute;inset:clamp(14px,2.4vw,32px);border:1px solid rgba(185,158,123,.35);pointer-events:none}
+#curtain .frame::after{content:"";position:absolute;inset:6px;border:1px solid rgba(185,158,123,.15)}
+#curtain .orn{display:flex;align-items:center;gap:14px;color:var(--gold);margin:6px 0 4px}
+#curtain .orn i{display:block;width:clamp(44px,8vw,90px);height:1px;background:linear-gradient(90deg,transparent,var(--gold))}
+#curtain .orn i:last-child{background:linear-gradient(270deg,transparent,var(--gold))}
+#curtain .orn b{width:7px;height:7px;border:1px solid var(--gold);transform:rotate(45deg)}
+.seal{position:relative;width:104px;height:104px;border-radius:50%;border:1px solid var(--gold);background:rgba(185,158,123,.06);color:var(--gold-l);font:400 11px var(--sans);letter-spacing:.28em;text-transform:uppercase;cursor:pointer;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1.7;transition:background .6s var(--ease),color .6s var(--ease),transform .6s var(--ease)}
+.seal::before{content:"";position:absolute;inset:-9px;border-radius:50%;border:1px solid rgba(185,158,123,.35);animation:ring 2.8s ease-out infinite}
+.seal:hover{background:var(--gold);color:var(--night);transform:scale(1.04)}
+@keyframes ring{0%{transform:scale(.92);opacity:.9}100%{transform:scale(1.28);opacity:0}}
+body.open #curtain .c{opacity:0;pointer-events:none}
+body.open #curtain .p.l{transform:translateX(-101%)}
+body.open #curtain .p.r{transform:translateX(101%)}
+body.open #curtain{pointer-events:none}
+body:not(.open){overflow:hidden;height:100vh}

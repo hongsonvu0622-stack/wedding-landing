@@ -1,0 +1,5 @@
+.lb{position:fixed;inset:0;z-index:90;background:rgba(20,24,16,.94);display:flex;align-items:center;justify-content:center;touch-action:pan-y}
+.lb img{max-width:92vw;max-height:86vh;width:auto;height:auto;object-fit:contain}
+.lb button{position:absolute;width:48px;height:48px;border-radius:50%;border:1px solid var(--gold);background:rgba(30,35,24,.6);color:var(--gold-l);cursor:pointer;font-size:20px;display:flex;align-items:center;justify-content:center}
+.lb .x{top:16px;right:16px}.lb .pv{left:12px;top:50%}.lb .nx{right:12px;top:50%}
+.lb .ct{position:absolute;bottom:18px;left:0;right:0;text-align:center;font:300 12px var(--sans);letter-spacing:.3em;color:var(--gold-l)}

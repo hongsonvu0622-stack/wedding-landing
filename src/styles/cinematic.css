@@ -1,0 +1,5 @@
+.cine{position:relative;height:110vh;min-height:600px;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center;color:#FAF6EF}
+.cine .bg{position:absolute;inset:-12% 0;will-change:transform}
+.cine::after{content:"";position:absolute;inset:0;background:rgba(30,35,24,.45)}
+.cine .q{position:relative;z-index:2;max-width:900px;padding:0 24px}
+.cine .q p{font-family:var(--serif);font-style:italic;font-weight:300;font-size:clamp(32px,5.2vw,72px);line-height:1.15}

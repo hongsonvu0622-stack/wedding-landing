@@ -1,0 +1,19 @@
+.rsvp{position:relative;padding:clamp(80px,12vw,180px) clamp(20px,5vw,72px);color:var(--ink);overflow:hidden}
+.rsvp .bg{position:absolute;inset:0}.rsvp .bg::after{content:"";position:absolute;inset:0;background:rgba(30,35,24,.55)}
+.card{position:relative;z-index:2;max-width:620px;margin:auto;background:var(--bg);padding:clamp(32px,6vw,72px);text-align:center}
+.card form{text-align:left;margin-top:36px;display:grid;gap:22px}
+label{display:block;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+input,textarea{width:100%;font:400 17px var(--sans);background:transparent;border:0;border-bottom:1px solid var(--gold);padding:10px 0;color:var(--ink);border-radius:0}
+textarea{min-height:90px;resize:vertical}.lab{display:block;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.step{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold);padding:6px 0}
+.step output{font-family:var(--serif);font-size:26px;font-weight:500;color:var(--ink)}
+.step button{width:44px;height:44px;border-radius:50%;border:1px solid var(--gold);background:transparent;color:var(--pine);font:300 24px/1 var(--serif);cursor:pointer;transition:background .4s var(--ease),color .4s var(--ease)}
+.step button:hover:not(:disabled){background:var(--pine);border-color:var(--pine);color:var(--bg)}
+.step button:disabled{opacity:.3;cursor:default}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.seg label{margin:0;border:1px solid var(--gold);text-align:center;padding:14px;cursor:pointer;letter-spacing:.2em;color:var(--pine);min-height:48px}
+.seg input{position:absolute;opacity:0;width:0}.seg input:checked+label{background:var(--pine);color:var(--bg);border-color:var(--pine)}
+footer{background:var(--night);color:var(--gold-l);text-align:center;padding:clamp(72px,10vw,140px) 20px 60px}
+footer .m{font-family:var(--script);font-size:clamp(90px,14vw,180px);line-height:1}
+footer p{font-family:var(--serif);font-style:italic;font-size:22px;margin-top:10px;color:var(--bg)}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}

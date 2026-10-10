@@ -1,0 +1,12 @@
+.err{color:#9B2C2C;font-size:13px;margin-top:6px}
+.status{font-family:var(--serif);font-size:24px;text-align:center;padding:24px 0}
+.wishes{max-width:620px;margin:28px auto 0;position:relative;z-index:2;display:grid;gap:14px}
+.wishes blockquote{background:rgba(250,246,239,.94);padding:18px 22px;font-family:var(--serif);font-size:20px;line-height:1.4}
+.wishes cite{display:block;font:400 11px var(--sans);letter-spacing:.26em;text-transform:uppercase;color:var(--gold);margin-top:8px;font-style:normal}
+.lab{display:block;font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.step{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--gold);padding:6px 0}
+.step output{font-family:var(--serif);font-size:26px;font-weight:500;color:var(--ink)}
+.step button{width:44px;height:44px;border-radius:50%;border:1px solid var(--gold);background:transparent;color:var(--pine);font:300 24px/1 var(--serif);cursor:pointer;transition:background .4s var(--ease),color .4s var(--ease)}
+.step button:hover:not(:disabled){background:var(--pine);border-color:var(--pine);color:var(--bg)}
+.step button:disabled{opacity:.3;cursor:default}
+.btn:disabled{opacity:.6;cursor:progress}
