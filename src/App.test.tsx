@@ -22,3 +22,34 @@ test('no ?to= falls back to Quý khách', () => {
   render(<App />)
   expect(screen.getByText('Quý khách')).toBeInTheDocument()
 })
+
+test('while a guest ID is being looked up the cover shows a placeholder, not the wrong "Quý khách"', async () => {
+  let resolve!: (v: unknown) => void
+  vi.stubGlobal('fetch', vi.fn(() => new Promise((r) => { resolve = r })))
+  window.history.replaceState({}, '', '/a-thanh-e78yw')
+  render(<App />)
+  expect(screen.queryByText('Quý khách')).toBeNull()
+  expect(document.getElementById('guest')).toHaveAttribute('aria-busy', 'true')
+  resolve({ ok: true, json: async () => ({ name: 'Anh Thành' }) })
+  expect(await screen.findByText('Anh Thành')).toBeInTheDocument()
+  expect(document.getElementById('guest')).not.toHaveAttribute('aria-busy')
+  vi.unstubAllGlobals()
+})
+
+test('an unknown ID falls back to Quý khách once the lookup answers', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ name: null }) }))
+  window.history.replaceState({}, '', '/khong-co-id')
+  render(<App />)
+  expect(await screen.findByText('Quý khách')).toBeInTheDocument()
+  vi.unstubAllGlobals()
+})
+
+test('a failed lookup also falls back to Quý khách (the invitation still opens)', async () => {
+  vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')))
+  window.history.replaceState({}, '', '/a-thanh-e78yw')
+  render(<App />)
+  expect(await screen.findByText('Quý khách', undefined, { timeout: 3000 })).toBeInTheDocument()
+  await userEvent.click(screen.getByRole('button', { name: 'Mở thiệp' }))
+  expect(document.body).toHaveClass('open')
+  vi.unstubAllGlobals()
+})

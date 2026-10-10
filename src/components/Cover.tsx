@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 
-interface Props { guestName: string; open: boolean; onOpen: () => void }
+interface Props { guestName: string; pending?: boolean; open: boolean; onOpen: () => void }
 
-export function Cover({ guestName, open, onOpen }: Props) {
+export function Cover({ guestName, pending, open, onOpen }: Props) {
   const [gone, setGone] = useState(false)
   useEffect(() => {
     if (!open) return
@@ -17,7 +17,7 @@ export function Cover({ guestName, open, onOpen }: Props) {
       <div className="frame" />
       <div className="c">
         <div className="eyebrow">Trân trọng kính mời</div>
-        <div className="to" id="guest">{guestName}</div>
+        <div className="to" id="guest" aria-busy={pending || undefined}>{pending ? <span className="sk" aria-hidden="true" /> : guestName}</div>
         <div className="orn" aria-hidden="true"><i /><b /><i /></div>
         <div className="mono">S <span style={{ fontSize: '.6em' }}>&amp;</span> L</div>
         <div className="eyebrow" style={{ margin: '2px 0 40px' }}>19 — 20 · 12 · 2026</div>

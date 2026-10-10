@@ -87,3 +87,33 @@ describe('fetchGuestName default timeout', () => {
     }
   })
 })
+
+describe('fetchGuestName retries', () => {
+  test('retries once after a network error or a 5xx and then returns the name', async () => {
+    const f = vi.fn()
+      .mockRejectedValueOnce(new TypeError('Failed to fetch'))
+      .mockResolvedValueOnce({ ok: false, status: 502 })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ name: 'Anh Thành' }) })
+    // first call: error -> retry -> 502 => gives up (null); second call succeeds on first attempt
+    expect(await fetchGuestName('abc', f as unknown as typeof fetch, 10_000, 0)).toBeNull()
+    expect(f).toHaveBeenCalledTimes(2)
+    expect(await fetchGuestName('abc', f as unknown as typeof fetch, 10_000, 0)).toBe('Anh Thành')
+  })
+  test('a blip followed by success returns the name', async () => {
+    const f = vi.fn()
+      .mockResolvedValueOnce({ ok: false, status: 503 })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ name: 'Chị Lan' }) })
+    expect(await fetchGuestName('abc', f as unknown as typeof fetch, 10_000, 0)).toBe('Chị Lan')
+    expect(f).toHaveBeenCalledTimes(2)
+  })
+  test('a {name:null} answer is final and is not retried', async () => {
+    const f = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ name: null }) })
+    expect(await fetchGuestName('abc', f as unknown as typeof fetch, 10_000, 0)).toBeNull()
+    expect(f).toHaveBeenCalledTimes(1)
+  })
+  test('a 400 (malformed id) is final and is not retried', async () => {
+    const f = vi.fn().mockResolvedValue({ ok: false, status: 400 })
+    expect(await fetchGuestName('abc', f as unknown as typeof fetch, 10_000, 0)).toBeNull()
+    expect(f).toHaveBeenCalledTimes(1)
+  })
+})

@@ -20,3 +20,7 @@ body.open #curtain .p.l{transform:translateX(-101%)}
 body.open #curtain .p.r{transform:translateX(101%)}
 body.open #curtain{pointer-events:none}
 body:not(.open){overflow:hidden;height:100vh}
+
+#curtain .to{min-height:1.25em}
+#curtain .to .sk{display:inline-block;width:8ch;height:.8em;vertical-align:middle;border-radius:2px;background:linear-gradient(90deg,rgba(185,158,123,.12),rgba(185,158,123,.35),rgba(185,158,123,.12));background-size:200% 100%;animation:shimmer 1.4s linear infinite}
+@keyframes shimmer{to{background-position:-200% 0}}

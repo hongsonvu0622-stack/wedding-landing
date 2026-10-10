@@ -14,8 +14,8 @@ describe('findGuestName', () => {
     expect(findGuestName(rows, '123')).toBe('Ánh Nguyệt')
     expect(findGuestName(rows, '9WNYt0')).toBe('Châu Nguyệt')
   })
-  test('IDs are case-sensitive, the header row is not a guest, first duplicate wins', () => {
-    expect(findGuestName(rows, '9wnyt0')).toBeNull()
+  test('the header row is not a guest and the first exact duplicate wins (case is tolerated, see below)', () => {
+    expect(findGuestName(rows, '9wnyt0')).toBe('Châu Nguyệt')
     expect(findGuestName(rows, 'ID')).toBeNull()
     expect(findGuestName(rows, 'dup')).toBe('Người Đầu')
   })
@@ -23,6 +23,18 @@ describe('findGuestName', () => {
     expect(findGuestName(rows, 'nope')).toBeNull()
     expect(findGuestName(rows, 'noname')).toBeNull()
     expect(findGuestName([], '123')).toBeNull()
+  })
+})
+
+describe('findGuestName tolerant matching', () => {
+  const r = [['ID', 'Name'], ['a-thanh-e78yw', 'Anh Thành'], ['K7MQ2', 'Chị Lan'], ['dup1', 'Một'], ['DUP1', 'Hai']]
+  test('an exact match always wins', () => expect(findGuestName(r, 'K7MQ2')).toBe('Chị Lan'))
+  test('falls back to a case-insensitive match when a chat app changed the case of the link', () => {
+    expect(findGuestName(r, 'A-THANH-E78YW')).toBe('Anh Thành')
+    expect(findGuestName(r, 'k7mq2')).toBe('Chị Lan')
+  })
+  test('an ambiguous case-insensitive match returns null instead of guessing', () => {
+    expect(findGuestName(r, 'Dup1')).toBeNull()
   })
 })
 

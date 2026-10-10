@@ -18,13 +18,13 @@ export function readSheetsEnv(e: Record<string, string | undefined>): SheetsEnv 
 }
 
 export function findGuestName(rows: string[][], id: string): string | null {
-  for (const r of rows.slice(1)) {
-    if ((r[0] ?? '').trim() === id) {
-      const name = (r[1] ?? '').trim()
-      return name || null
-    }
-  }
-  return null
+  const body = rows.slice(1)
+  const nameOf = (r: string[]) => (r[1] ?? '').trim() || null
+  for (const r of body) if ((r[0] ?? '').trim() === id) return nameOf(r)
+  // Some chat apps change the case of a link; accept a case-insensitive match only if it is unambiguous.
+  const lower = id.toLowerCase()
+  const hits = body.filter((r) => (r[0] ?? '').trim().toLowerCase() === lower)
+  return hits.length === 1 ? nameOf(hits[0]) : null
 }
 
 export function formatSheetTime(d: Date): string {

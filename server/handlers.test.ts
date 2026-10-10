@@ -133,3 +133,77 @@ describe('rsvp abuse limits', () => {
     expect(r.body).toEqual([{ name: 'D', message: 'Trăm năm hạnh phúc', at: 't4' }])
   })
 })
+
+describe('guest lookup resilience', () => {
+  test('after the TTL it serves the old rows immediately and refreshes in the background', async () => {
+    let now = 0
+    let release!: (rows: string[][]) => void
+    let calls = 0
+    const api = fakeApi({
+      getGuestRows: () => {
+        calls++
+        if (calls === 1) return Promise.resolve([['ID', 'Name'], ['a', 'Tên Cũ']])
+        return new Promise<string[][]>((r) => { release = r })
+      },
+    })
+    const h = createHandlers(api, { now: () => now })
+    expect((await h.guest('a')).body).toEqual({ name: 'Tên Cũ' })
+    now = 25_000
+    expect((await h.guest('a')).body).toEqual({ name: 'Tên Cũ' }) // not blocked by the slow refresh
+    expect(calls).toBe(2)
+    release([['ID', 'Name'], ['a', 'Tên Mới']])
+    await new Promise((r) => setTimeout(r, 0))
+    expect((await h.guest('a')).body).toEqual({ name: 'Tên Mới' })
+  })
+
+  test('keeps serving the last good rows when a refresh fails', async () => {
+    let now = 0
+    let fail = false
+    const api = fakeApi({
+      getGuestRows: async () => { if (fail) throw new Error('quota'); return [['ID', 'Name'], ['a', 'Còn Đó']] },
+    })
+    const h = createHandlers(api, { now: () => now, retryDelayMs: 0 })
+    await h.guest('a')
+    fail = true
+    now = 60_000
+    expect((await h.guest('a')).body).toEqual({ name: 'Còn Đó' })
+    await new Promise((r) => setTimeout(r, 0))
+    now = 120_000
+    expect((await h.guest('a')).body).toEqual({ name: 'Còn Đó' })
+  })
+
+  test('retries a failing sheet read once before giving up', async () => {
+    let calls = 0
+    const api = fakeApi({
+      getGuestRows: async () => { calls++; if (calls === 1) throw new Error('blip'); return [['ID', 'Name'], ['a', 'Sau Khi Thử Lại']] },
+    })
+    const r = await createHandlers(api, { retryDelayMs: 0 }).guest('a')
+    expect(r.body).toEqual({ name: 'Sau Khi Thử Lại' })
+    expect(calls).toBe(2)
+  })
+
+  test('if the very first load fails twice it answers 502, and the next request tries again', async () => {
+    let calls = 0
+    const api = fakeApi({
+      getGuestRows: async () => { calls++; if (calls <= 2) throw new Error('down'); return [['ID', 'Name'], ['a', 'Đã Lại']] },
+    })
+    const h = createHandlers(api, { retryDelayMs: 0 })
+    expect((await h.guest('a')).status).toBe(502)
+    expect((await h.guest('a')).body).toEqual({ name: 'Đã Lại' })
+  })
+
+  test('warm() preloads the guest rows so the first visitor does not wait for Google', async () => {
+    let calls = 0
+    const api = fakeApi({ getGuestRows: async () => { calls++; return [['ID', 'Name'], ['a', 'X']] } })
+    const h = createHandlers(api)
+    await h.warm()
+    expect(calls).toBe(1)
+    await h.guest('a')
+    expect(calls).toBe(1)
+  })
+
+  test('warm() never throws, even if the sheet is down', async () => {
+    const h = createHandlers(fakeApi({ getGuestRows: async () => { throw new Error('down') } }), { retryDelayMs: 0 })
+    await expect(h.warm()).resolves.toBeUndefined()
+  })
+})

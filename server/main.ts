@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url'
 import guest from '../api/guest.js'
 import rsvp from '../api/rsvp.js'
 import wishes from '../api/wishes.js'
+import { warmUp } from './runtime.js'
 
 type Route = (req: IncomingMessage, res: ServerResponse) => Promise<void> | void
 
@@ -160,7 +161,10 @@ if (isEntry) {
   const port = Number(process.env.PORT ?? 3000)
   const distDir = process.env.DIST_DIR ?? path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist')
   const server = createAppServer({ distDir })
-  server.listen(port, '0.0.0.0', () => console.log(`Wedding site listening on :${port}`))
+  server.listen(port, '0.0.0.0', () => {
+    console.log(`Wedding site listening on :${port}`)
+    warmUp()
+  })
   const stop = () => server.close(() => process.exit(0))
   process.on('SIGTERM', stop)
   process.on('SIGINT', stop)

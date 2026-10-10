@@ -20,7 +20,7 @@ import { Footer } from './sections/Footer'
 import { useReveal } from './hooks/useReveal'
 
 export function App() {
-  const { name } = useGuestName()
+  const { name, pending } = useGuestName()
   const music = useMusic()
   const [open, setOpen] = useState(false)
 
@@ -39,7 +39,7 @@ export function App() {
 
   return (
     <>
-      <Cover guestName={name} open={open} onOpen={handleOpen} />
+      <Cover guestName={name} pending={pending} open={open} onOpen={handleOpen} />
       <MusicButton playing={music.playing} onToggle={() => void music.toggle()} />
       <audio ref={music.ref} src={wedding.musicSrc} loop preload="none" />
       <Nav />

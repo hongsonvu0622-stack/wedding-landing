@@ -27,17 +27,32 @@ export function readGuestRef(loc: { pathname: string; search: string }): GuestRe
   return looksLikeId(q) ? { id: q, freeText: null } : { id: null, freeText: q }
 }
 
-export async function fetchGuestName(id: string, fetchImpl: typeof fetch = fetch, timeoutMs = 10_000): Promise<string | null> {
+async function attempt(id: string, fetchImpl: typeof fetch, timeoutMs: number): Promise<{ retry: boolean; name: string | null }> {
   const ctrl = new AbortController()
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs)
+  let timedOut = false
+  const timer = setTimeout(() => { timedOut = true; ctrl.abort() }, timeoutMs)
   try {
     const res = await fetchImpl(`/api/guest?id=${encodeURIComponent(id)}`, { signal: ctrl.signal })
-    if (!res.ok) return null
-    const data = await res.json()
-    return sanitizeName(typeof data?.name === 'string' ? data.name : null)
+    if (res.ok) {
+      try {
+        const data = await res.json()
+        return { retry: false, name: sanitizeName(typeof data?.name === 'string' ? data.name : null) }
+      } catch {
+        return { retry: false, name: null }
+      }
+    }
+    return { retry: res.status >= 500, name: null } // 4xx is a final answer; 5xx is worth one more try
   } catch {
-    return null
+    return { retry: !timedOut, name: null } // a timeout already waited long enough; a network error may be a blip
   } finally {
     clearTimeout(timer)
   }
+}
+
+// null = no such guest (or the server could not be reached): the page then shows "Quý khách".
+export async function fetchGuestName(id: string, fetchImpl: typeof fetch = fetch, timeoutMs = 10_000, retryDelayMs = 500): Promise<string | null> {
+  const first = await attempt(id, fetchImpl, timeoutMs)
+  if (!first.retry) return first.name
+  await new Promise((r) => setTimeout(r, retryDelayMs))
+  return (await attempt(id, fetchImpl, timeoutMs)).name
 }

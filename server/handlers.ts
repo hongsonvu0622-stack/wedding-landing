@@ -4,7 +4,7 @@ import { buildResponseRow, findGuestName, type SheetsApi } from './sheets.js'
 
 export interface HttpResult { status: number; body: unknown }
 
-const GUEST_TTL = 60_000
+const GUEST_TTL = 20_000
 const WISH_TTL = 30_000
 const IP_LIMIT = 5
 const IP_WINDOW = 10 * 60_000
@@ -14,22 +14,41 @@ const LINKISH = /(https?:\/\/|www\.|\b[\w-]+\.(com|vn|net|org|info|xyz|top|io|me
 const TOO_MANY: HttpResult = { status: 429, body: { error: 'Bạn gửi quá nhanh, vui lòng thử lại sau ít phút.' } }
 const BAD_GATEWAY: HttpResult = { status: 502, body: { error: 'Không kết nối được bảng tính. Vui lòng thử lại sau.' } }
 
-function cached<T>(ttl: number, now: () => number, load: () => Promise<T>) {
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms))
+
+// One quick retry smooths over transient Google errors (rate limit blips, network resets).
+async function withRetry<T>(fn: () => Promise<T>, delayMs: number): Promise<T> {
+  try {
+    return await fn()
+  } catch {
+    await sleep(delayMs)
+    return fn()
+  }
+}
+
+// Stale-while-revalidate: the first call waits for the load; afterwards every call is instant.
+// Once the TTL passes, one background refresh runs and the previous value keeps being served,
+// so a slow or failing Google call never reaches a visitor.
+function swr<T>(ttl: number, now: () => number, load: () => Promise<T>) {
   let value: T | undefined
   let at = -Infinity
-  return async () => {
-    if (value === undefined || now() - at >= ttl) {
-      value = await load()
-      at = now()
-    }
+  let inflight: Promise<T> | null = null
+  const refresh = (): Promise<T> =>
+    (inflight ??= load()
+      .then((v) => { value = v; at = now(); return v })
+      .finally(() => { inflight = null }))
+  return async (): Promise<T> => {
+    if (value === undefined) return refresh()
+    if (now() - at >= ttl) refresh().catch(() => { /* keep serving the last good value */ })
     return value
   }
 }
 
-export function createHandlers(api: SheetsApi, opts: { now?: () => number } = {}) {
+export function createHandlers(api: SheetsApi, opts: { now?: () => number; retryDelayMs?: number } = {}) {
   const now = opts.now ?? Date.now
-  const guestRows = cached(GUEST_TTL, now, () => api.getGuestRows())
-  const responseRows = cached(WISH_TTL, now, () => api.getResponseRows())
+  const retryDelay = opts.retryDelayMs ?? 300
+  const guestRows = swr(GUEST_TTL, now, () => withRetry(() => api.getGuestRows(), retryDelay))
+  const responseRows = swr(WISH_TTL, now, () => withRetry(() => api.getResponseRows(), retryDelay))
   const byIp = new Map<string, number[]>()
   let all: number[] = []
 
@@ -49,6 +68,11 @@ export function createHandlers(api: SheetsApi, opts: { now?: () => number } = {}
   }
 
   return {
+    // Preload the guest list at startup so the first visitor does not wait for Google.
+    async warm(): Promise<void> {
+      await guestRows().then(() => undefined, () => undefined)
+    },
+
     async guest(id: string | undefined): Promise<HttpResult> {
       if (!id || !looksLikeId(id)) return { status: 400, body: { error: 'Invalid id' } }
       try {
