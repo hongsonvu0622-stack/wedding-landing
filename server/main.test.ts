@@ -3,7 +3,7 @@ import fs from 'node:fs'
 import os from 'node:os'
 import path from 'node:path'
 import type { AddressInfo } from 'node:net'
-import { createAppServer } from './main'
+import { createAppServer, resolveOrigin } from './main'
 
 let dir: string
 let server: ReturnType<typeof createAppServer>
@@ -14,7 +14,7 @@ beforeAll(async () => {
   dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dist-'))
   fs.mkdirSync(path.join(dir, 'assets'))
   fs.mkdirSync(path.join(dir, 'img'))
-  fs.writeFileSync(path.join(dir, 'index.html'), '<!doctype html><title>spa</title>')
+  fs.writeFileSync(path.join(dir, 'index.html'), '<!doctype html><title>spa</title><meta property="og:image" content="__ORIGIN__/og-image.jpg"><meta property="og:url" content="__ORIGIN__/">')
   fs.writeFileSync(path.join(dir, 'assets', 'app-abc.js'), 'console.log(1)')
   fs.writeFileSync(path.join(dir, 'img', 'a-640.webp'), 'webp')
   fs.writeFileSync(path.join(os.tmpdir(), 'secret-outside.txt'), 'SECRET')
@@ -129,4 +129,63 @@ test('an unsatisfiable or malformed range answers 416 with the file size', async
   expect(r.headers.get('content-range')).toBe('bytes */10')
   const bad = await fetch(`${base}/img/song.m4a`, { headers: { Range: 'bytes=abc' } })
   expect([200, 416]).toContain(bad.status)
+})
+
+describe('resolveOrigin', () => {
+  test('uses SITE_URL when set (trailing slash removed) and ignores forwarded headers', () => {
+    expect(resolveOrigin({ 'x-forwarded-host': 'evil.example' }, 'https://thiep.example.com/')).toBe('https://thiep.example.com')
+  })
+  test('builds the origin from forwarded proto/host, then from Host', () => {
+    expect(resolveOrigin({ 'x-forwarded-proto': 'https', 'x-forwarded-host': 'thiep.example.com' })).toBe('https://thiep.example.com')
+    expect(resolveOrigin({ host: '192.168.1.5:3000' })).toBe('http://192.168.1.5:3000')
+    expect(resolveOrigin({ 'x-forwarded-proto': 'https, http', 'x-forwarded-host': 'a.example.com, b.internal' })).toBe('https://a.example.com')
+  })
+  test('rejects anything that is not a plain host (no HTML or header injection)', () => {
+    expect(resolveOrigin({ host: '"><script>alert(1)</script>' })).toBe('')
+    expect(resolveOrigin({ host: 'a.example.com/path' })).toBe('')
+    expect(resolveOrigin({ host: 'a b' })).toBe('')
+    expect(resolveOrigin({ 'x-forwarded-proto': 'javascript', host: 'a.example.com' })).toBe('http://a.example.com')
+    expect(resolveOrigin({}, 'not a url')).toBe('')
+  })
+})
+
+describe('social metadata injection', () => {
+  test('absolute og:image and og:url are built from the forwarded host/proto', async () => {
+    const r = await fetch(`${base}/`, { headers: { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'thiep.example.com' } })
+    const html = await r.text()
+    expect(html).toContain('content="https://thiep.example.com/og-image.jpg"')
+    expect(html).toContain('content="https://thiep.example.com/"')
+    expect(html).not.toContain('__ORIGIN__')
+  })
+  test('guest links (/<ID>) get the same injection', async () => {
+    const r = await fetch(`${base}/9WNYt0`, { headers: { 'x-forwarded-proto': 'https', 'x-forwarded-host': 'thiep.example.com' } })
+    expect(await r.text()).toContain('https://thiep.example.com/og-image.jpg')
+  })
+  test('a hostile forwarded host cannot inject markup', async () => {
+    const r = await fetch(`${base}/`, { headers: { 'x-forwarded-host': '"><script>alert(1)</script>' } })
+    const html = await r.text()
+    expect(html).not.toContain('<script>')
+    expect(html).toContain('content="/og-image.jpg"')
+  })
+  test('siteUrl option wins over request headers', async () => {
+    const s3 = createAppServer({ distDir: dir, routes: {}, siteUrl: 'https://fixed.example.org' })
+    await new Promise<void>((r) => s3.listen(0, '127.0.0.1', r))
+    const r = await fetch(`http://127.0.0.1:${(s3.address() as AddressInfo).port}/`, { headers: { 'x-forwarded-host': 'other.example' } })
+    expect(await r.text()).toContain('https://fixed.example.org/og-image.jpg')
+    await new Promise((res) => s3.close(res))
+  })
+  test('HEAD reports the length of the injected body, and the page is never cached', async () => {
+    const get = await fetch(`${base}/`, { headers: { 'x-forwarded-host': 'thiep.example.com' } })
+    const body = await get.text()
+    const head = await fetch(`${base}/`, { method: 'HEAD', headers: { 'x-forwarded-host': 'thiep.example.com' } })
+    expect(head.headers.get('content-length')).toBe(String(Buffer.byteLength(body)))
+    expect(get.headers.get('cache-control')).toBe('no-cache')
+  })
+})
+
+test('the web app manifest is served with its proper media type', async () => {
+  fs.writeFileSync(path.join(dir, 'site.webmanifest'), '{"name":"x"}')
+  const r = await fetch(`${base}/site.webmanifest`)
+  expect(r.status).toBe(200)
+  expect(r.headers.get('content-type')).toBe('application/manifest+json; charset=utf-8')
 })

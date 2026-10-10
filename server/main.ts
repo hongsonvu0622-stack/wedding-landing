@@ -12,13 +12,31 @@ const TYPES: Record<string, string> = {
   '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json; charset=utf-8', '.webp': 'image/webp',
   '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.svg': 'image/svg+xml', '.ico': 'image/x-icon',
-  '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8',
+  '.m4a': 'audio/mp4', '.mp3': 'audio/mpeg', '.woff2': 'font/woff2', '.txt': 'text/plain; charset=utf-8', '.webmanifest': 'application/manifest+json; charset=utf-8',
 }
 
 const SECURITY: Record<string, string> = {
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'X-Frame-Options': 'SAMEORIGIN',
+}
+
+const HOST = /^[a-z0-9.-]+(:\d{1,5})?$/i
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v)?.split(',')[0].trim()
+
+// Public origin used for absolute URLs in social metadata. Only plain http(s) hosts are accepted: nothing else can reach the HTML.
+export function resolveOrigin(
+  headers: { host?: string; 'x-forwarded-host'?: string | string[]; 'x-forwarded-proto'?: string | string[] },
+  siteUrl?: string,
+): string {
+  if (siteUrl) {
+    const url = siteUrl.trim().replace(/\/+$/, '')
+    return /^https?:\/\/[a-z0-9.-]+(:\d{1,5})?$/i.test(url) ? url : ''
+  }
+  const host = first(headers['x-forwarded-host']) ?? headers.host
+  if (!host || !HOST.test(host)) return ''
+  const proto = first(headers['x-forwarded-proto'])
+  return `${proto === 'https' ? 'https' : 'http'}://${host}`
 }
 
 function json(res: ServerResponse, status: number, body: unknown) {
@@ -49,9 +67,23 @@ function resolveFile(distDir: string, urlPath: string): string | null {
   }
 }
 
-export function createAppServer(opts: { distDir: string; routes?: Record<string, Route> }) {
+export function createAppServer(opts: { distDir: string; routes?: Record<string, Route>; siteUrl?: string }) {
   const routes: Record<string, Route> = opts.routes ?? { guest, rsvp, wishes }
   const index = path.join(opts.distDir, 'index.html')
+  const siteUrl = opts.siteUrl ?? process.env.SITE_URL
+  let template: string | undefined
+
+  // index.html carries __ORIGIN__ placeholders; every page view gets absolute URLs for the host it was served from.
+  const sendIndex = (req: IncomingMessage, res: ServerResponse) => {
+    template ??= fs.readFileSync(index, 'utf8')
+    const body = Buffer.from(template.replaceAll('__ORIGIN__', resolveOrigin(req.headers, siteUrl)))
+    res.statusCode = 200
+    res.setHeader('Content-Type', TYPES['.html'])
+    res.setHeader('Cache-Control', 'no-cache')
+    if (!siteUrl) res.setHeader('Vary', 'X-Forwarded-Host, X-Forwarded-Proto, Host')
+    res.setHeader('Content-Length', body.length)
+    res.end(req.method === 'HEAD' ? undefined : body)
+  }
 
   const sendFile = (req: IncomingMessage, res: ServerResponse, file: string, urlPath: string) => {
     const size = fs.statSync(file).size
@@ -114,11 +146,12 @@ export function createAppServer(opts: { distDir: string; routes?: Record<string,
       return json(res, 405, { error: 'Method not allowed' })
     }
 
-    const target = urlPath === '/' ? index : resolveFile(opts.distDir, urlPath)
+    if (urlPath === '/' || urlPath === '/index.html') return sendIndex(req, res)
+    const target = resolveFile(opts.distDir, urlPath)
     if (target) return sendFile(req, res, target, urlPath)
     // Unknown file with an extension is a real 404; extensionless paths are guest links handled by the SPA.
     if (path.extname(urlPath)) return json(res, 404, { error: 'Not found' })
-    return sendFile(req, res, index, '/')
+    return sendIndex(req, res)
   })
 }
 

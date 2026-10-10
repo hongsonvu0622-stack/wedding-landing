@@ -12,13 +12,17 @@
     "photos:all": "node scripts/optimize-images.mjs --all",
     "dev:lan": "vite --host --port 5173",
     "build:server": "esbuild server/main.ts --bundle --platform=node --target=node22 --format=esm --outfile=dist-server/main.mjs --log-level=warning",
-    "start": "node dist-server/main.mjs"
+    "start": "node dist-server/main.mjs",
+    "brand": "node scripts/make-brand-assets.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",
     "react-dom": "^19.3.0"
   },
   "devDependencies": {
+    "@expo-google-fonts/cormorant-garamond": "^0.4.1",
+    "@expo-google-fonts/great-vibes": "^0.4.1",
+    "@expo-google-fonts/montserrat": "^0.4.2",
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@testing-library/user-event": "^14.6.7",
@@ -28,6 +32,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "esbuild": "^0.28.2",
     "jsdom": "^30.1.2",
+    "opentype.js": "^2.0.0",
     "sharp": "^0.35.5",
     "typescript": "^7.0.2",
     "vite": "^8.3.4",
