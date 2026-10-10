@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "photos": "node scripts/optimize-images.mjs",
-    "photos:all": "node scripts/optimize-images.mjs --all"
+    "photos:all": "node scripts/optimize-images.mjs --all",
+    "dev:lan": "vite --host --port 5173"
   },
   "dependencies": {
     "google-auth-library": "^11.2.0",
