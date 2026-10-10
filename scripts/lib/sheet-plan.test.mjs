@@ -155,7 +155,7 @@ describe('planFill never overwrites a cell that holds a formula', () => {
     expect(changes[0].id.to.startsWith('anh-kien-')).toBe(true)
     expect(changes[0].link).toBeUndefined()
     expect(summary.linksFilled).toBe(0)
-    expect(summary.linksSkippedFormula).toBe(1)
+    expect(summary.linksSkippedFormula).toBe(2) // cả hai dòng mẫu đều có Link là công thức
   })
 
   test('toBatch therefore writes the ID cell only', () => {
