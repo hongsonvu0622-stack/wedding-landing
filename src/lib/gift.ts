@@ -2,6 +2,7 @@
 export function formatAccountNumber(raw: string): string {
   const compact = raw.replace(/[\s-]/g, '')
   if (!/^\d+$/.test(compact)) return raw
+  if (compact.length <= 8) return compact // số ngắn: chia nhóm trông lạ ("0456 58")
   return compact.replace(/(\d{4})(?=\d)/g, '$1 ')
 }
 

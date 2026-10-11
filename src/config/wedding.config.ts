@@ -9,11 +9,13 @@ export interface WeddingEvent {
 }
 
 export interface GiftAccount {
-  role: string
+  side: 'groom' | 'bride'
   bank: string
   accountName: string
   accountNumber: string
   qr: string
+  /** Đánh dấu tài khoản dùng thử: thẻ hiện nhãn "Thử nghiệm" để không ai dùng nhầm. Xoá dòng này khi dùng thật. */
+  testOnly?: boolean
 }
 
 export interface Person {
@@ -60,9 +62,14 @@ export const wedding = {
   ],
   rsvpBackground: '7958',
   gift: {
-    note: 'Sự hiện diện của bạn là món quà quý nhất với chúng mình. Nếu muốn gửi lời chúc bằng một món quà nhỏ, bạn có thể dùng mã QR dưới đây.',
+    note: 'Sự hiện diện của bạn là món quà quý nhất với chúng mình. Nếu muốn gửi lời chúc bằng một món quà nhỏ, bạn có thể bấm nút dưới đây.',
+    // Mỗi bên một tài khoản. Khi có đủ cả hai, khách được hỏi "bạn của chú rể hay cô dâu" rồi mới thấy mã tương ứng.
+    // Thêm tài khoản cô dâu: chạy `npm run qr -- source/gift/co-dau.jpg --out=public/gift-qr-bride.png`, rồi thêm dòng:
+    //   { side: 'bride', bank: 'Tên ngân hàng', accountName: 'THAI THI PHUONG LAN', accountNumber: '<số tài khoản>', qr: '/gift-qr-bride.png' },
     accounts: [
-      { role: 'Chú rể', bank: 'TPBank', accountName: 'VU HONG SON', accountNumber: '21357045656', qr: '/gift-qr.png' },
+      { side: 'groom', bank: 'TPBank', accountName: 'VU HONG SON', accountNumber: '21357045656', qr: '/gift-qr.png' },
+      // TẠM THỜI để thử giao diện: dùng mã VIB của chú rể làm "cô dâu". Thay bằng tài khoản cô dâu thật rồi bỏ testOnly.
+      { side: 'bride', bank: 'VIB', accountName: 'VŨ HỒNG SƠN', accountNumber: '045658', qr: '/gift-qr-bride.png', testOnly: true },
     ] as GiftAccount[],
   },
   musicSrc: '/audio/song.m4a',

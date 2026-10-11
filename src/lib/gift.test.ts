@@ -4,6 +4,9 @@ describe('formatAccountNumber', () => {
   test('groups digits in fours for easy reading', () => {
     expect(formatAccountNumber('21357045656')).toBe('2135 7045 656')
     expect(formatAccountNumber('1234')).toBe('1234')
+    expect(formatAccountNumber('045658')).toBe('045658') // ngắn: không chia nhóm
+    expect(formatAccountNumber('12345678')).toBe('12345678')
+    expect(formatAccountNumber('123456789')).toBe('1234 5678 9')
     expect(formatAccountNumber('123456789012')).toBe('1234 5678 9012')
   })
   test('ignores existing spaces and dashes and leaves non-numeric text untouched', () => {
