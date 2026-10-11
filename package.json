@@ -15,7 +15,8 @@
     "start": "node dist-server/main.mjs",
     "brand": "node scripts/make-brand-assets.mjs",
     "guests": "esbuild scripts/guests.ts --bundle --platform=node --target=node22 --format=esm --outfile=data/.guests.mjs --log-level=error && node --env-file=.env.local data/.guests.mjs",
-    "guests:file": "node scripts/gen-guests.mjs"
+    "guests:file": "node scripts/gen-guests.mjs",
+    "qr": "node scripts/make-gift-qr.mjs"
   },
   "dependencies": {
     "react": "^19.3.0",
@@ -34,6 +35,7 @@
     "@vitejs/plugin-react": "^6.1.2",
     "esbuild": "^0.28.2",
     "jsdom": "^30.1.2",
+    "jsqr": "^1.4.0",
     "opentype.js": "^2.0.0",
     "sharp": "^0.35.5",
     "typescript": "^7.0.2",

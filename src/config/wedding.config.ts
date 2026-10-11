@@ -8,6 +8,14 @@ export interface WeddingEvent {
   mapsQuery?: string
 }
 
+export interface GiftAccount {
+  role: string
+  bank: string
+  accountName: string
+  accountNumber: string
+  qr: string
+}
+
 export interface Person {
   full: string
   first: string
@@ -51,6 +59,11 @@ export const wedding = {
     '7663','6475','6526','6698','6823','7145','7468','7753','7931','8000','8064','8258',
   ],
   rsvpBackground: '7958',
-  gift: { bank: 'Đang cập nhật', accountName: 'Đang cập nhật', accountNumber: 'Đang cập nhật', note: 'Sự hiện diện của bạn là món quà quý nhất với chúng mình.' },
+  gift: {
+    note: 'Sự hiện diện của bạn là món quà quý nhất với chúng mình. Nếu muốn gửi lời chúc bằng một món quà nhỏ, bạn có thể dùng mã QR dưới đây.',
+    accounts: [
+      { role: 'Chú rể', bank: 'TPBank', accountName: 'VU HONG SON', accountNumber: '21357045656', qr: '/gift-qr.png' },
+    ] as GiftAccount[],
+  },
   musicSrc: '/audio/song.m4a',
 }
