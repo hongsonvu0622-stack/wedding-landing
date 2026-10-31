@@ -44,6 +44,7 @@ export const wedding = {
       venue: 'Sảnh Amber · Trung Tâm Hội Nghị & Tiệc Cưới Pavilion Tân Sơn Nhất',
       address: '202 Hoàng Văn Thụ, Phường Đức Nhuận, TP. Hồ Chí Minh',
       mapsQuery: 'Trung Tâm Hội Nghị & Tiệc Cưới Pavilion Tân Sơn Nhất 202 Hoàng Văn Thụ',
+      mapsUrl: 'https://maps.app.goo.gl/z7U2qxAyy2FA7BeD9',
     },
     {
       id: 'thanh-hon', title: 'Lễ Thành Hôn', side: 'Nhà trai', startsAt: '2026-12-20T11:00:00+07:00', venue: 'Tư gia nhà trai',
