@@ -1,6 +1,6 @@
 .gal{padding:clamp(80px,10vw,150px) 0;overflow:hidden}
 .gal .head{text-align:center;padding:0 20px;margin-bottom:48px}
-.strip{display:flex;gap:clamp(12px,2vw,28px);overflow-x:auto;padding:0 clamp(20px,5vw,72px) 24px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
+.strip{position:relative;display:flex;gap:clamp(12px,2vw,28px);overflow-x:auto;padding:0 clamp(20px,5vw,72px) 24px;scroll-snap-type:x mandatory;scrollbar-width:thin;scrollbar-color:var(--gold) transparent}
 .strip figure{flex:0 0 auto;height:clamp(380px,62vh,640px);aspect-ratio:2/3;scroll-snap-align:center;overflow:hidden;position:relative}
 .strip figure.w{aspect-ratio:3/2}
 .strip figure:nth-child(even){margin-top:clamp(24px,5vw,70px)}

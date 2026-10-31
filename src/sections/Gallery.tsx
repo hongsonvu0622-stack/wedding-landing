@@ -3,11 +3,13 @@ import { wedding } from '../config/wedding.config'
 import { Photo } from '../components/Photo'
 import { getPhoto } from '../lib/photos'
 import { Lightbox } from './Lightbox'
+import { useAutoSlide } from '../hooks/useAutoSlide'
 
 export function Gallery() {
   const [open, setOpen] = useState<number | null>(null)
   const strip = useRef<HTMLDivElement>(null)
   const drag = useRef({ down: false, x: 0, left: 0, moved: false })
+  useAutoSlide(strip, open !== null)
 
   const onDown = (e: React.PointerEvent) => {
     if (e.pointerType !== 'mouse' || !strip.current) return
