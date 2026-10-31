@@ -6,6 +6,8 @@ export interface WeddingEvent {
   venue: string
   address?: string
   mapsQuery?: string
+  /** Link Google Maps trực tiếp (vd. link chia sẻ maps.app.goo.gl); ưu tiên hơn mapsQuery. */
+  mapsUrl?: string
 }
 
 export interface GiftAccount {
@@ -43,7 +45,10 @@ export const wedding = {
       address: '202 Hoàng Văn Thụ, Phường Đức Nhuận, TP. Hồ Chí Minh',
       mapsQuery: 'Trung Tâm Hội Nghị & Tiệc Cưới Pavilion Tân Sơn Nhất 202 Hoàng Văn Thụ',
     },
-    { id: 'thanh-hon', title: 'Lễ Thành Hôn', side: 'Nhà trai', startsAt: '2026-12-20T11:00:00+07:00', venue: 'Tư gia nhà trai' },
+    {
+      id: 'thanh-hon', title: 'Lễ Thành Hôn', side: 'Nhà trai', startsAt: '2026-12-20T11:00:00+07:00', venue: 'Tư gia nhà trai',
+      mapsUrl: 'https://maps.app.goo.gl/L7WrCQHRCs4nhmxz8',
+    },
   ] satisfies WeddingEvent[],
   hero: { landscape: '6457', portrait: '6485' },
   invitation: {
