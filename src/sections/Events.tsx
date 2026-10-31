@@ -7,6 +7,8 @@ const pad = (n: number) => String(n).padStart(2, '0')
 
 function EventCard({ ev }: { ev: WeddingEvent }) {
   const d = formatEventDate(ev.startsAt)
+  const mapsHref = ev.mapsUrl
+    ?? (ev.mapsQuery && `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.mapsQuery)}`)
   return (
     <article>
       <div className="k">{ev.title} · {ev.side}</div>
@@ -17,9 +19,8 @@ function EventCard({ ev }: { ev: WeddingEvent }) {
         {ev.address && <><br />{ev.address}</>}
       </div>
       <div className="ctas">
-        {ev.mapsQuery && (
-          <a className="btn" target="_blank" rel="noopener noreferrer"
-            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(ev.mapsQuery)}`}>Chỉ đường</a>
+        {mapsHref && (
+          <a className="btn" target="_blank" rel="noopener noreferrer" href={mapsHref}>Chỉ đường</a>
         )}
         <button className="btn" type="button" onClick={() => downloadIcs(ev)}>Thêm vào lịch</button>
       </div>

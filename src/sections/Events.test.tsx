@@ -18,12 +18,13 @@ test('shows both events with their dates and times', () => {
   expect(screen.getByText('Tư gia nhà trai')).toBeInTheDocument()
 })
 
-test('only the event with an address has a directions link', () => {
+test('each event has a directions link, preferring the explicit maps URL', () => {
   render(<Events />)
   const links = screen.getAllByRole('link', { name: 'Chỉ đường' })
-  expect(links).toHaveLength(1)
+  expect(links).toHaveLength(2)
   expect(links[0]).toHaveAttribute('href', expect.stringContaining('google.com/maps/search'))
-  expect(links[0]).toHaveAttribute('rel', expect.stringContaining('noopener'))
+  expect(links[1]).toHaveAttribute('href', 'https://maps.app.goo.gl/L7WrCQHRCs4nhmxz8')
+  for (const l of links) expect(l).toHaveAttribute('rel', expect.stringContaining('noopener'))
 })
 
 test('each event has its own add-to-calendar button', async () => {
