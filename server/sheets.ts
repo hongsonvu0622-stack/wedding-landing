@@ -134,7 +134,7 @@ export function createSheetsApi(env: SheetsEnv, request: SheetsRequest = default
     request({
       url: `${BASE}/${env.sheetId}/values/${enc(tab, cols)}:append`,
       method: 'POST',
-      params: { valueInputOption: 'RAW', insertDataOption: 'INSERT_ROWS' }, // RAW: "=..." được lưu như chữ, không bị tính thành công thức
+      params: { valueInputOption: 'RAW', insertDataOption: 'OVERWRITE' }, // RAW: "=..." lưu như chữ, không bị tính thành công thức. OVERWRITE: tuyệt đối không chèn dòng, vì chèn sẽ làm trượt vùng tham chiếu của công thức trong tab khách
       data: { values: [row] },
     })
   const update = (tab: string, a1: string, row: string[]) =>

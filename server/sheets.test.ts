@@ -164,6 +164,29 @@ describe('createSheetsApi: reading', () => {
   })
 })
 
+describe('createSheetsApi.recordRsvp never inserts rows', () => {
+  // Công thức ở tab khách tham chiếu cố định 'RSVP web'!$A$2:$A$3000. Chèn dòng (INSERT_ROWS) làm vùng đó trượt xuống
+  // ($A$4:$A$3002...) và câu trả lời rơi ra ngoài vùng: công thức không thấy RSVP nữa.
+  test('every append overwrites the next free row instead of inserting a row', async () => {
+    const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD], 'RSVP log': [LOG_HEAD] })
+    await createSheetsApi(ENV, wb.request).recordRsvp(entry(), NOW)
+    const appends = wb.calls.filter((c) => c.url.includes(':append'))
+    expect(appends).toHaveLength(2)
+    for (const a of appends) {
+      expect(a.params?.insertDataOption).toBe('OVERWRITE')
+      expect(a.params?.insertDataOption).not.toBe('INSERT_ROWS')
+    }
+  })
+  test('no request ever asks the sheet to insert or delete rows or columns', async () => {
+    const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD, ['4NUV42', 'Tham dự', '1', '', 't0', '1']], 'RSVP log': [LOG_HEAD] })
+    const api = createSheetsApi(ENV, wb.request)
+    await api.recordRsvp(entry(), NOW)
+    await api.recordRsvp(entry({ id: 'NEW001' }), NOW)
+    const bodies = JSON.stringify(wb.calls.map((c) => [c.url, c.params, c.data]))
+    expect(bodies).not.toMatch(/INSERT_ROWS|insertDimension|deleteDimension|insertRange|deleteRange/)
+  })
+})
+
 describe('createSheetsApi.recordRsvp', () => {
   test('a first answer appends one row to RSVP web (count 1) and one to RSVP log, as RAW text', async () => {
     const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD], 'RSVP log': [LOG_HEAD] })
