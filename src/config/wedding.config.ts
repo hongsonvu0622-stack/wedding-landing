@@ -70,12 +70,10 @@ export const wedding = {
   gift: {
     note: 'Sự hiện diện của bạn là món quà quý nhất với chúng mình. Nếu muốn gửi lời chúc bằng một món quà nhỏ, bạn có thể bấm nút dưới đây.',
     // Mỗi bên một tài khoản. Khi có đủ cả hai, khách được hỏi "bạn của chú rể hay cô dâu" rồi mới thấy mã tương ứng.
-    // Thêm tài khoản cô dâu: chạy `npm run qr -- source/gift/co-dau.jpg --out=public/gift-qr-bride.png`, rồi thêm dòng:
-    //   { side: 'bride', bank: 'Tên ngân hàng', accountName: 'THAI THI PHUONG LAN', accountNumber: '<số tài khoản>', qr: '/gift-qr-bride.png' },
+    // Đổi mã QR: chạy `npm run qr -- source/gift/<ảnh>.jpg --out=public/gift-qr-bride.png` rồi sửa số tài khoản cho khớp.
     accounts: [
       { side: 'groom', bank: 'TPBank', accountName: 'VU HONG SON', accountNumber: '21357045656', qr: '/gift-qr.png' },
-      // TẠM THỜI để thử giao diện: dùng mã VIB của chú rể làm "cô dâu". Thay bằng tài khoản cô dâu thật rồi bỏ testOnly.
-      { side: 'bride', bank: 'VIB', accountName: 'VŨ HỒNG SƠN', accountNumber: '045658', qr: '/gift-qr-bride.png', testOnly: true },
+      { side: 'bride', bank: 'TPBank', accountName: 'THAI THI PHUONG LAN', accountNumber: '04388439001', qr: '/gift-qr-bride.png' },
     ] as GiftAccount[],
   },
   musicSrc: '/audio/song.m4a',
