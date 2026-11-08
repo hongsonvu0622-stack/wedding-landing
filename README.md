@@ -12,6 +12,20 @@
 - Tên tab có thể đổi bằng biến `GUEST_SHEET_NAME`, `RSVP_WEB_SHEET_NAME`, `RSVP_LOG_SHEET_NAME` (xem `.env.example`).
 - Bí mật: copy `.env.example` thành `.env.local` và điền `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `GOOGLE_SHEET_ID`. Chia sẻ Sheet cho email tài khoản dịch vụ với quyền chỉnh sửa. Không bao giờ commit `.env.local`.
 
+## Giữ công thức của Sheet không bị lệch
+
+Công thức ở các tab khách đọc `'RSVP web'` qua vùng cố định. Hai quy tắc để không làm hỏng chúng:
+
+- **Máy chủ không bao giờ chèn hay xoá dòng**: mọi lần thêm RSVP dùng `OVERWRITE` (ghi vào dòng trống kế tiếp). Chèn dòng (`INSERT_ROWS`) làm cả vùng công thức trượt xuống và các câu trả lời rơi ra ngoài vùng. Có kiểm thử cấm điều này. Cột `Số người` và `Số lần gửi` được ghi bằng **số thật** (không phải chữ) để `SUM`/`COUNT` trong Sheet tính đúng.
+- **Vùng tham chiếu bắt đầu từ dòng tiêu đề** (`'RSVP web'!$A$1:$A$3000`, không phải `$A$2`). Nếu ai đó chèn dòng dưới tiêu đề thì vùng chỉ giãn ra chứ không trượt. Lệnh dưới đây sửa sẵn cho file hiện tại và có thể chạy lại bất cứ lúc nào (không đổi gì nếu đã sửa):
+
+```bash
+npm run fix:formulas             # XEM TRƯỚC: chỉ in ra sẽ sửa gì, chưa ghi
+npm run fix:formulas -- --apply  # ghi thật: sao lưu công thức và giá trị vào data/, ghi từng ô, rồi so sánh giá trị trước và sau
+```
+
+Lệnh chỉ đổi dòng bắt đầu của các vùng `'RSVP web'` từ 2 thành 1, không đụng ô tĩnh hay công thức khác, và dừng nếu ô vừa bị người khác sửa giữa chừng. Cần tài khoản dịch vụ có quyền sửa file (không còn vùng khoá cho nó).
+
 ## Tạo ID và link mời cho khách (lệnh cũ, chỉ dành cho Sheet có cột `ID` và `Name`)
 
 > File Sheet hiện tại tự quản lý `Mã thiệp` nên **không cần lệnh này**; nếu chạy với file hiện tại, lệnh sẽ dừng và báo không thấy cột `ID`/`Name`, chưa ghi gì. Giữ lại cho trường hợp dùng Sheet đơn giản kiểu cũ (đặt `GUEST_SHEET_NAME` trỏ tới tab đó hoặc dùng `--tab=`).

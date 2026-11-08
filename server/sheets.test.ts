@@ -80,10 +80,10 @@ describe('RSVP rows', () => {
     expect(rsvpStatus(false)).toBe('Không tham dự')
   })
   test('log row = Thời gian, Mã thiệp, Xác nhận, Số người, Lời nhắn', () => {
-    expect(rsvpLogRow(entry(), NOW)).toEqual(['08/11/2026 10:04:05', '4NUV42', 'Tham dự', '2', 'Chúc mừng'])
+    expect(rsvpLogRow(entry(), NOW)).toEqual(['08/11/2026 10:04:05', '4NUV42', 'Tham dự', 2, 'Chúc mừng'])
   })
   test('web row = Mã thiệp, Xác nhận, Số người, Lời nhắn, Thời gian cập nhật, Số lần gửi', () => {
-    expect(rsvpWebRow(entry({ attending: false, people: 0, message: '' }), NOW, 3)).toEqual(['4NUV42', 'Không tham dự', '0', '', '08/11/2026 10:04:05', '3'])
+    expect(rsvpWebRow(entry({ attending: false, people: 0, message: '' }), NOW, 3)).toEqual(['4NUV42', 'Không tham dự', 0, '', '08/11/2026 10:04:05', 3])
   })
 })
 
@@ -119,24 +119,24 @@ describe('readSheetsEnv', () => {
 })
 
 // Một "Google Sheet" nhỏ trong bộ nhớ, hiểu đúng các lời gọi mà createSheetsApi gửi đi.
-function fakeWorkbook(initial: Record<string, string[][]>) {
-  const tabs: Record<string, string[][]> = JSON.parse(JSON.stringify(initial))
+function fakeWorkbook(initial: Record<string, (string | number)[][]>) {
+  const tabs: Record<string, (string | number)[][]> = JSON.parse(JSON.stringify(initial))
   const calls: { url: string; method?: string; params?: Record<string, string>; data?: any }[] = []
   const tabOf = (url: string) => decodeURIComponent(/values\/([^:?]+)/.exec(url)![1]).replace(/^'((?:[^']|'')*)'!.*$/, '$1').replace(/''/g, "'")
   const request: SheetsRequest = async (o) => {
     calls.push(o)
     if (o.url.includes(':append')) {
       const tab = tabOf(o.url)
-      for (const row of (o.data as { values: string[][] }).values) (tabs[tab] ??= []).push(row)
+      for (const row of (o.data as { values: (string | number)[][] }).values) (tabs[tab] ??= []).push(row)
       return { data: {} }
     }
     if (o.url.endsWith('values:batchUpdate')) {
-      for (const d of (o.data as { data: { range: string; values: string[][] }[] }).data) {
+      for (const d of (o.data as { data: { range: string; values: (string | number)[][] }[] }).data) {
         const m = /^'((?:[^']|'')*)'!([A-Z]+)(\d+)(?::([A-Z]+)\d+)?$/.exec(d.range)!
         const tab = m[1].replace(/''/g, "'"); const col = m[2].charCodeAt(0) - 65; const r = Number(m[3]) - 1
         tabs[tab] ??= []
         while (tabs[tab].length <= r) tabs[tab].push([])
-        d.values[0].forEach((v: string, i: number) => { while (tabs[tab][r].length <= col + i) tabs[tab][r].push(''); tabs[tab][r][col + i] = v })
+        d.values[0].forEach((v: string | number, i: number) => { while (tabs[tab][r].length <= col + i) tabs[tab][r].push(''); tabs[tab][r][col + i] = v })
       }
       return { data: {} }
     }
@@ -187,12 +187,34 @@ describe('createSheetsApi.recordRsvp never inserts rows', () => {
   })
 })
 
+describe('createSheetsApi.recordRsvp writes real numbers', () => {
+  // Chữ "2" thay cho số 2 khiến SUM/COUNT trong Sheet bỏ qua ô đó: tổng số người tính bàn sẽ thiếu.
+  test('Số người and Số lần gửi are numbers in both tabs, the rest stay text', async () => {
+    const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD], 'RSVP log': [LOG_HEAD] })
+    await createSheetsApi(ENV, wb.request).recordRsvp(entry({ people: 3 }), NOW)
+    const web = wb.tabs['RSVP web'][1]; const log = wb.tabs['RSVP log'][1]
+    expect([typeof web[0], typeof web[1], typeof web[2], typeof web[3], typeof web[4], typeof web[5]]).toEqual(['string', 'string', 'number', 'string', 'string', 'number'])
+    expect([typeof log[0], typeof log[1], typeof log[2], typeof log[3], typeof log[4]]).toEqual(['string', 'string', 'string', 'number', 'string'])
+  })
+  test('the count keeps counting when the sheet already holds numbers', async () => {
+    const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD, ['4NUV42', 'Tham dự', 2, '', 't0', 4]], 'RSVP log': [LOG_HEAD] })
+    await createSheetsApi(ENV, wb.request).recordRsvp(entry(), NOW)
+    expect(wb.tabs['RSVP web'][1][5]).toBe(5)
+  })
+  test('an ID made only of digits is still written as text so it matches the guest list text', async () => {
+    const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD], 'RSVP log': [LOG_HEAD] })
+    await createSheetsApi(ENV, wb.request).recordRsvp(entry({ id: '123456' }), NOW)
+    expect(wb.tabs['RSVP web'][1][0]).toBe('123456')
+    expect(wb.tabs['RSVP log'][1][1]).toBe('123456')
+  })
+})
+
 describe('createSheetsApi.recordRsvp', () => {
   test('a first answer appends one row to RSVP web (count 1) and one to RSVP log, as RAW text', async () => {
     const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD], 'RSVP log': [LOG_HEAD] })
     await createSheetsApi(ENV, wb.request).recordRsvp(entry(), NOW)
-    expect(wb.tabs['RSVP web'][1]).toEqual(['4NUV42', 'Tham dự', '2', 'Chúc mừng', '08/11/2026 10:04:05', '1'])
-    expect(wb.tabs['RSVP log'][1]).toEqual(['08/11/2026 10:04:05', '4NUV42', 'Tham dự', '2', 'Chúc mừng'])
+    expect(wb.tabs['RSVP web'][1]).toEqual(['4NUV42', 'Tham dự', 2, 'Chúc mừng', '08/11/2026 10:04:05', 1])
+    expect(wb.tabs['RSVP log'][1]).toEqual(['08/11/2026 10:04:05', '4NUV42', 'Tham dự', 2, 'Chúc mừng'])
     for (const c of wb.calls.filter((x) => x.method === 'POST')) expect(c.params?.valueInputOption).toBe('RAW')
   })
 
@@ -200,7 +222,7 @@ describe('createSheetsApi.recordRsvp', () => {
     const wb = fakeWorkbook({ 'RSVP web': [WEB_HEAD, ['4NUV42', 'Tham dự', '2', 'cũ', 't0', '2']], 'RSVP log': [LOG_HEAD] })
     await createSheetsApi(ENV, wb.request).recordRsvp(entry({ attending: false, people: 0, message: '' }), NOW)
     expect(wb.tabs['RSVP web']).toHaveLength(2)
-    expect(wb.tabs['RSVP web'][1]).toEqual(['4NUV42', 'Không tham dự', '0', '', '08/11/2026 10:04:05', '3'])
+    expect(wb.tabs['RSVP web'][1]).toEqual(['4NUV42', 'Không tham dự', 0, '', '08/11/2026 10:04:05', 3])
     const update = wb.calls.find((c) => c.url.endsWith('values:batchUpdate'))!
     expect(update.data.data[0].range).toBe("'RSVP web'!B2:F2")
     expect(wb.tabs['RSVP log']).toHaveLength(2)
@@ -225,7 +247,7 @@ describe('createSheetsApi.recordRsvp', () => {
     const api = createSheetsApi(ENV, wb.request)
     await Promise.all([api.recordRsvp(entry({ message: 'a' }), NOW), api.recordRsvp(entry({ message: 'b' }), NOW)])
     expect(wb.tabs['RSVP web']).toHaveLength(2)
-    expect(wb.tabs['RSVP web'][1][5]).toBe('2')
+    expect(wb.tabs['RSVP web'][1][5]).toBe(2)
     expect(wb.tabs['RSVP log']).toHaveLength(3)
   })
 

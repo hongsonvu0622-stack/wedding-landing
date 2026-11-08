@@ -92,13 +92,14 @@ export function formatSheetTime(d: Date): string {
 export const rsvpStatus = (attending: boolean) => (attending ? 'Tham dự' : 'Không tham dự')
 
 // RSVP log: Thời gian | Mã thiệp | Xác nhận | Số người | Lời nhắn
-export function rsvpLogRow(e: RsvpEntry, now: Date): string[] {
-  return [formatSheetTime(now), e.id, rsvpStatus(e.attending), String(e.people), e.message.trim()]
+// Số người là SỐ (không phải chữ): SUM/COUNT trong Sheet bỏ qua ô chữ. Mã thiệp luôn là chữ để khớp mã trong danh sách khách.
+export function rsvpLogRow(e: RsvpEntry, now: Date): (string | number)[] {
+  return [formatSheetTime(now), e.id, rsvpStatus(e.attending), e.people, e.message.trim()]
 }
 
 // RSVP web: Mã thiệp | Xác nhận | Số người | Lời nhắn | Thời gian cập nhật | Số lần gửi
-export function rsvpWebRow(e: RsvpEntry, now: Date, count: number): string[] {
-  return [e.id, rsvpStatus(e.attending), String(e.people), e.message.trim(), formatSheetTime(now), String(count)]
+export function rsvpWebRow(e: RsvpEntry, now: Date, count: number): (string | number)[] {
+  return [e.id, rsvpStatus(e.attending), e.people, e.message.trim(), formatSheetTime(now), count]
 }
 
 // Số dòng (tính từ 1) của khách trong "RSVP web", hoặc -1. Bỏ qua dòng tiêu đề, khoảng trắng và chữ hoa/thường.
@@ -130,14 +131,14 @@ export function createSheetsApi(env: SheetsEnv, request: SheetsRequest = default
     const r = await request({ url: `${BASE}/${env.sheetId}/values/${enc(tab, cols)}` })
     return (r.data?.values ?? []) as string[][]
   }
-  const append = (tab: string, cols: string, row: string[]) =>
+  const append = (tab: string, cols: string, row: (string | number)[]) =>
     request({
       url: `${BASE}/${env.sheetId}/values/${enc(tab, cols)}:append`,
       method: 'POST',
       params: { valueInputOption: 'RAW', insertDataOption: 'OVERWRITE' }, // RAW: "=..." lưu như chữ, không bị tính thành công thức. OVERWRITE: tuyệt đối không chèn dòng, vì chèn sẽ làm trượt vùng tham chiếu của công thức trong tab khách
       data: { values: [row] },
     })
-  const update = (tab: string, a1: string, row: string[]) =>
+  const update = (tab: string, a1: string, row: (string | number)[]) =>
     request({
       url: `${BASE}/${env.sheetId}/values:batchUpdate`,
       method: 'POST',
