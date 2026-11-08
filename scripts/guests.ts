@@ -51,7 +51,13 @@ const saveBackup = async (grid: string[][]) => {
 const grid = await readGrid()
 const formulas = await readGrid('FORMULA') // để không bao giờ ghi đè ô đang là công thức
 const planOptions = { base, suffixLength, cleanNames, expand, formulas }
-const plan = planFill(grid, planOptions)
+let plan: ReturnType<typeof planFill>
+try {
+  plan = planFill(grid, planOptions)
+} catch (e) {
+  console.error('LỖI: ' + (e instanceof Error ? e.message : e) + '\nChưa ghi gì vào Sheet. (Lệnh này dành cho tab có cột "ID" và "Name"; file khách mời hiện tại tự quản lý "Mã thiệp".)')
+  process.exit(1)
+}
 const s = plan.summary
 
 console.log(`Tab "${tab}": ${s.total} khách có tên.`)

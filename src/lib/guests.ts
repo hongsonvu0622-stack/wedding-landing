@@ -19,12 +19,16 @@ function safeDecode(s: string): string {
   try { return decodeURIComponent(s) } catch { return s }
 }
 
+// Link khách có ba dạng: /<mã>, ?khach=<mã> (tham số mặc định của file khách mời) và ?to=<mã hoặc tên>.
 export function readGuestRef(loc: { pathname: string; search: string }): GuestRef {
   const seg = safeDecode(loc.pathname.split('/').filter(Boolean)[0] ?? '')
   if (looksLikeId(seg)) return { id: seg, freeText: null }
-  const q = sanitizeName(new URLSearchParams(loc.search).get('to'))
-  if (!q) return { id: null, freeText: null }
-  return looksLikeId(q) ? { id: q, freeText: null } : { id: null, freeText: q }
+  const params = new URLSearchParams(loc.search)
+  const khach = sanitizeName(params.get('khach'))
+  if (khach && looksLikeId(khach)) return { id: khach, freeText: null }
+  const to = sanitizeName(params.get('to'))
+  if (!to) return { id: null, freeText: null }
+  return looksLikeId(to) ? { id: to, freeText: null } : { id: null, freeText: to }
 }
 
 async function attempt(id: string, fetchImpl: typeof fetch, timeoutMs: number): Promise<{ retry: boolean; name: string | null }> {

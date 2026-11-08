@@ -49,6 +49,20 @@ describe('readGuestRef', () => {
   })
 })
 
+describe('readGuestRef: the ?khach= parameter used by the guest workbook', () => {
+  test('?khach=<Mã thiệp> is an ID', () => {
+    expect(readGuestRef({ pathname: '/', search: '?khach=4NUV42' })).toEqual({ id: '4NUV42', freeText: null })
+  })
+  test('?khach= wins over ?to=, and the path still wins over both', () => {
+    expect(readGuestRef({ pathname: '/', search: '?to=abc&khach=4NUV42' }).id).toBe('4NUV42')
+    expect(readGuestRef({ pathname: '/ZZZ111', search: '?khach=4NUV42' }).id).toBe('ZZZ111')
+  })
+  test('an empty or non-ID ?khach= falls back to ?to=', () => {
+    expect(readGuestRef({ pathname: '/', search: '?khach=&to=Anh%20Minh' })).toEqual({ id: null, freeText: 'Anh Minh' })
+    expect(readGuestRef({ pathname: '/', search: '?khach=a%20b&to=9XMPV8' }).id).toBe('9XMPV8')
+  })
+})
+
 describe('fetchGuestName', () => {
   const ok = (body: unknown) => vi.fn().mockResolvedValue({ ok: true, json: async () => body })
   test('returns the sanitized name and encodes the id', async () => {

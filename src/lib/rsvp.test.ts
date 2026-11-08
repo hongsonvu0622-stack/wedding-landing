@@ -1,13 +1,9 @@
-import { createApiClient, validateRsvp, type RsvpPayload } from './rsvp'
+import { RsvpError, createApiClient, validateRsvp, type RsvpPayload } from './rsvp'
 
-const ok: RsvpPayload = { name: 'Anh Minh', attending: true, companions: 1, message: 'Chúc mừng!' }
+const ok: RsvpPayload = { id: '4NUV42', attending: true, companions: 1, message: 'Chúc mừng!' }
 
 describe('validateRsvp', () => {
   test('accepts a complete payload', () => expect(validateRsvp(ok)).toEqual({}))
-  test('requires a name and caps it at 60 characters', () => {
-    expect(validateRsvp({ ...ok, name: '   ' }).name).toBeDefined()
-    expect(validateRsvp({ ...ok, name: 'a'.repeat(61) }).name).toBeDefined()
-  })
   test('companions must be an integer 0-9, only checked when attending', () => {
     expect(validateRsvp({ ...ok, companions: 0 })).toEqual({})
     expect(validateRsvp({ ...ok, companions: 9 })).toEqual({})
@@ -23,18 +19,25 @@ describe('validateRsvp', () => {
 })
 
 describe('createApiClient', () => {
-  test('POSTs JSON to /api/rsvp', async () => {
+  test('POSTs JSON with the guest ID, and no name, to /api/rsvp', async () => {
     const f = vi.fn().mockResolvedValue({ ok: true })
     await createApiClient(f as unknown as typeof fetch).submit(ok)
     const [url, init] = f.mock.calls[0]
     expect(url).toBe('/api/rsvp')
     expect(init.method).toBe('POST')
     expect(init.headers['Content-Type']).toBe('application/json')
-    expect(JSON.parse(init.body)).toEqual(ok)
+    expect(JSON.parse(init.body)).toEqual({ id: '4NUV42', attending: true, companions: 1, message: 'Chúc mừng!' })
   })
-  test('rejects on a non-OK status so the form can offer a retry', async () => {
-    const f = vi.fn().mockResolvedValue({ ok: false, status: 502 })
-    await expect(createApiClient(f as unknown as typeof fetch).submit(ok)).rejects.toThrow()
+  test('a non-OK reply becomes an RsvpError carrying the status and the server code', async () => {
+    const f = vi.fn().mockResolvedValue({ ok: false, status: 404, json: async () => ({ code: 'unknown_guest' }) })
+    const err = await createApiClient(f as unknown as typeof fetch).submit(ok).catch((e) => e)
+    expect(err).toBeInstanceOf(RsvpError)
+    expect(err).toMatchObject({ status: 404, code: 'unknown_guest' })
+  })
+  test('an error reply without a JSON body is still an RsvpError (status only)', async () => {
+    const f = vi.fn().mockResolvedValue({ ok: false, status: 502, json: async () => { throw new Error('no json') } })
+    const err = await createApiClient(f as unknown as typeof fetch).submit(ok).catch((e) => e)
+    expect(err).toMatchObject({ status: 502, code: undefined })
   })
   test('rejects when the network fails', async () => {
     const f = vi.fn().mockRejectedValue(new TypeError('Failed to fetch'))

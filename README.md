@@ -3,13 +3,20 @@
 - `npm run dev` chạy thử (có cả API đọc và ghi Google Sheet), `npm test` kiểm thử, `npm run build` đóng gói (thư mục `dist`).
 - Ảnh gốc nằm trong `source/` (không đưa lên web). Sau khi thêm hoặc đổi ảnh: sửa `src/config/photo-ids.json` rồi chạy `npm run photos`.
 - Nội dung (tên, giờ, địa điểm, lời mời, ảnh từng phần): `src/config/wedding.config.ts`.
-- Khách mời: tab `khách mời` trong Google Sheet (cột `ID`, `Name`). Link mời có dạng `https://ten-mien/<ID>` hoặc `https://ten-mien/?to=<ID>`. Không tìm thấy ID thì hiện "Quý khách". ID chấp nhận lệch chữ hoa/thường nếu không bị trùng. Máy chủ nạp sẵn danh sách khi khởi động và làm mới ngầm mỗi 20 giây, nên sửa Sheet xong thì thiệp cập nhật sau khoảng 20 giây; nếu Google lỗi thoáng qua, máy chủ vẫn dùng danh sách tốt gần nhất.
-- RSVP ghi vào tab `Responses` (Tên khách, Tham dự, Số người, Lời nhắn, Thời gian). "Số người" là tổng số người đến (1 + số người đi cùng), 0 nếu không tham dự.
+- **Khách mời** lấy từ tab `Thiệp online (tổng hợp)` của file Sheet (đã gộp ba bên, bỏ khách "Huỷ mời"): cột `Mã thiệp` và `Tên hiển thị trên thiệp`. Link mời có dạng `https://ten-mien/?khach=<Mã thiệp>` (tham số `khach` là mặc định của file), hoặc `https://ten-mien/<Mã thiệp>`, hoặc `?to=<Mã thiệp>`. Không tìm thấy mã thì hiện "Quý khách". Mã chấp nhận lệch chữ hoa/thường nếu không bị trùng. Máy chủ nạp sẵn danh sách khi khởi động và làm mới ngầm mỗi 20 giây, nên sửa Sheet xong thì thiệp cập nhật sau khoảng 20 giây; nếu Google lỗi thoáng qua, máy chủ vẫn dùng danh sách tốt gần nhất.
+- **RSVP** ghi theo mã thiệp (Sheet không lưu tên) vào hai tab, không đụng tới tiêu đề hay thứ tự cột:
+  - `RSVP web` (`Mã thiệp | Xác nhận | Số người | Lời nhắn | Thời gian cập nhật | Số lần gửi`): mỗi khách một dòng. Gửi lại thì cập nhật dòng đó và tăng `Số lần gửi`.
+  - `RSVP log` (`Thời gian | Mã thiệp | Xác nhận | Số người | Lời nhắn`): ghi nối tiếp mọi lần gửi.
+  - `Xác nhận` là đúng chữ `Tham dự` hoặc `Không tham dự` (công thức của file so sánh đúng chữ này). `Số người` là tổng số người đến, kể cả khách (1 + số người đi cùng), 0 nếu không tham dự. Thời gian dạng `dd/MM/yyyy HH:mm:ss` giờ Việt Nam.
+  - Khách mở thiệp **không qua link riêng** thì chưa gửi được RSVP (không biết là ai); form hiện lời nhắc dùng link riêng.
+- Tên tab có thể đổi bằng biến `GUEST_SHEET_NAME`, `RSVP_WEB_SHEET_NAME`, `RSVP_LOG_SHEET_NAME` (xem `.env.example`).
 - Bí mật: copy `.env.example` thành `.env.local` và điền `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY`, `GOOGLE_SHEET_ID`. Chia sẻ Sheet cho email tài khoản dịch vụ với quyền chỉnh sửa. Không bao giờ commit `.env.local`.
 
-## Tạo ID và link mời cho khách (chạy ở máy bạn, ghi thẳng vào Google Sheet)
+## Tạo ID và link mời cho khách (lệnh cũ, chỉ dành cho Sheet có cột `ID` và `Name`)
 
-Lệnh đọc tab "khách mời" qua `.env.local`, cấp ID cho những khách chưa có và điền ô Link:
+> File Sheet hiện tại tự quản lý `Mã thiệp` nên **không cần lệnh này**; nếu chạy với file hiện tại, lệnh sẽ dừng và báo không thấy cột `ID`/`Name`, chưa ghi gì. Giữ lại cho trường hợp dùng Sheet đơn giản kiểu cũ (đặt `GUEST_SHEET_NAME` trỏ tới tab đó hoặc dùng `--tab=`).
+
+Lệnh đọc một tab (mặc định theo `GUEST_SHEET_NAME`) qua `.env.local`, cấp ID cho những khách chưa có và điền ô Link:
 
 ```bash
 npm run guests                    # XEM TRƯỚC: chỉ in ra sẽ làm gì, chưa ghi gì vào Sheet

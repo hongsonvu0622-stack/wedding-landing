@@ -1,6 +1,6 @@
-import { looksLikeId, sanitizeName } from '../src/lib/guests.js'
+import { looksLikeId } from '../src/lib/guests.js'
 import { validateRsvp } from '../src/lib/rsvp.js'
-import { buildResponseRow, findGuestName, type SheetsApi } from './sheets.js'
+import { findGuest, type SheetsApi } from './sheets.js'
 
 export interface HttpResult { status: number; body: unknown }
 
@@ -48,7 +48,7 @@ export function createHandlers(api: SheetsApi, opts: { now?: () => number; retry
   const now = opts.now ?? Date.now
   const retryDelay = opts.retryDelayMs ?? 300
   const guestRows = swr(GUEST_TTL, now, () => withRetry(() => api.getGuestRows(), retryDelay))
-  const responseRows = swr(WISH_TTL, now, () => withRetry(() => api.getResponseRows(), retryDelay))
+  const logRows = swr(WISH_TTL, now, () => withRetry(() => api.getLogRows(), retryDelay))
   const byIp = new Map<string, number[]>()
   let all: number[] = []
 
@@ -76,7 +76,7 @@ export function createHandlers(api: SheetsApi, opts: { now?: () => number; retry
     async guest(id: string | undefined): Promise<HttpResult> {
       if (!id || !looksLikeId(id)) return { status: 400, body: { error: 'Invalid id' } }
       try {
-        return { status: 200, body: { name: findGuestName(await guestRows(), id) } }
+        return { status: 200, body: { name: findGuest(await guestRows(), id)?.name ?? null } }
       } catch {
         return BAD_GATEWAY
       }
@@ -85,15 +85,23 @@ export function createHandlers(api: SheetsApi, opts: { now?: () => number; retry
     async rsvp(body: unknown, ctx: { ip?: string } = {}): Promise<HttpResult> {
       const b = body as Record<string, unknown> | null
       if (
-        !b || typeof b !== 'object' || typeof b.name !== 'string' || typeof b.attending !== 'boolean' ||
+        !b || typeof b !== 'object' || typeof b.id !== 'string' || typeof b.attending !== 'boolean' ||
         typeof b.companions !== 'number' || typeof b.message !== 'string'
       ) return { status: 400, body: { error: 'Invalid body' } }
-      const payload = { name: b.name, attending: b.attending, companions: b.companions, message: b.message }
+      const id = b.id.trim()
+      if (!looksLikeId(id)) return { status: 400, body: { error: 'Invalid id' } }
+      const payload = { id, attending: b.attending, companions: b.companions, message: b.message }
       const errors = validateRsvp(payload)
       if (Object.keys(errors).length) return { status: 400, body: { errors } }
+      // Đếm cả các lần thử mã lạ: không cho dò mã thiệp qua endpoint này.
       if (throttled(ctx.ip ?? 'unknown')) return TOO_MANY
       try {
-        await api.appendResponse(buildResponseRow({ ...payload, name: sanitizeName(payload.name) ?? payload.name }, new Date(now())))
+        const guest = findGuest(await guestRows(), id)
+        if (!guest) return { status: 404, body: { error: 'Không tìm thấy khách mời', code: 'unknown_guest' } }
+        await api.recordRsvp(
+          { id: guest.id, attending: payload.attending, people: payload.attending ? 1 + payload.companions : 0, message: payload.message },
+          new Date(now()),
+        )
         return { status: 200, body: { ok: true } }
       } catch {
         return BAD_GATEWAY
@@ -102,9 +110,21 @@ export function createHandlers(api: SheetsApi, opts: { now?: () => number; retry
 
     async wishes(): Promise<HttpResult> {
       try {
-        const rows = (await responseRows()).slice(1)
+        const rows = (await logRows()).slice(1)
+        // Sheet RSVP chỉ lưu mã thiệp: tên lấy từ danh sách khách (nếu danh sách không đọc được thì dùng tên chung).
+        const names = new Map<string, string>()
+        try {
+          for (const r of (await guestRows()).slice(1)) {
+            const key = String(r[0] ?? '').trim().toLowerCase()
+            if (key && !names.has(key)) names.set(key, String(r[1] ?? '').trim())
+          }
+        } catch { /* dùng tên chung */ }
         const wishes = rows
-          .map((r) => ({ name: (r[0] ?? '').trim(), message: (r[3] ?? '').trim(), at: r[4] ?? '' }))
+          .map((r) => ({
+            name: names.get(String(r[1] ?? '').trim().toLowerCase()) || 'Khách mời',
+            message: String(r[4] ?? '').trim(),
+            at: String(r[0] ?? ''),
+          }))
           .filter((w) => w.message && !LINKISH.test(w.message))
           .slice(-30)
           .reverse()
