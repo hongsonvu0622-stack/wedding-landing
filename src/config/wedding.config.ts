@@ -1,3 +1,6 @@
+import groomQr from '../assets/gift/gift-qr.png' // import (không để trong public/) để file build ra có mã băm trong tên: đổi ảnh là đổi link, Cloudflare/trình duyệt/Zalo không giữ ảnh cũ
+import brideQr from '../assets/gift/gift-qr-bride.png'
+
 export interface WeddingEvent {
   id: string
   title: string
@@ -70,10 +73,10 @@ export const wedding = {
   gift: {
     note: 'Sự hiện diện của bạn là món quà quý nhất với chúng mình. Nếu muốn gửi lời chúc bằng một món quà nhỏ, bạn có thể bấm nút dưới đây.',
     // Mỗi bên một tài khoản. Khi có đủ cả hai, khách được hỏi "bạn của chú rể hay cô dâu" rồi mới thấy mã tương ứng.
-    // Đổi mã QR: chạy `npm run qr -- source/gift/<ảnh>.jpg --out=public/gift-qr-bride.png` rồi sửa số tài khoản cho khớp.
+    // Đổi mã QR: chạy `npm run qr -- source/gift/<ảnh>.jpg --out=src/assets/gift/gift-qr-bride.png` rồi sửa số tài khoản cho khớp.
     accounts: [
-      { side: 'groom', bank: 'TPBank', accountName: 'VU HONG SON', accountNumber: '21357045656', qr: '/gift-qr.png' },
-      { side: 'bride', bank: 'TPBank', accountName: 'THAI THI PHUONG LAN', accountNumber: '04388439001', qr: '/gift-qr-bride.png' },
+      { side: 'groom', bank: 'TPBank', accountName: 'VU HONG SON', accountNumber: '21357045656', qr: groomQr },
+      { side: 'bride', bank: 'TPBank', accountName: 'THAI THI PHUONG LAN', accountNumber: '04388439001', qr: brideQr },
     ] as GiftAccount[],
   },
   musicSrc: '/audio/song.m4a',

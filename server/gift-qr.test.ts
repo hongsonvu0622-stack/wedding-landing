@@ -1,5 +1,6 @@
 // @vitest-environment node
 import fs from 'node:fs'
+import path from 'node:path'
 import jsQR from 'jsqr'
 import sharp from 'sharp'
 import { wedding } from '../src/config/wedding.config'
@@ -10,7 +11,12 @@ async function decode(path: string) {
 }
 
 describe.each(wedding.gift.accounts.map((a) => [a.side, a] as const))('gift QR image (%s)', (_side, acc) => {
-  const file = `public${acc.qr}`
+  // Ảnh được import nên acc.qr là đường dẫn Vite tính từ gốc dự án (vd. /src/assets/gift/gift-qr.png).
+  const file = path.join(process.cwd(), acc.qr)
+
+  test('is bundled as a hashed asset, never served from public/ (a fixed URL lets Cloudflare keep an old QR)', () => {
+    expect(acc.qr).toMatch(/^\/src\/assets\/gift\//)
+  })
 
   test('exists, is large enough to stay sharp on phones and light enough to load fast', async () => {
     expect(fs.existsSync(file)).toBe(true)

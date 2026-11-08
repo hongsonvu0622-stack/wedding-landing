@@ -1,6 +1,6 @@
 // Cắt sát mã VietQR từ ảnh chụp màn hình ngân hàng, giữ nguyên điểm ảnh (không vẽ lại mã).
-//   npm run qr                                                                    chú rể: source/gift/vietqr-original.jpg -> public/gift-qr.png
-//   npm run qr -- source/gift/co-dau.jpg --out=public/gift-qr-bride.png          mã của cô dâu
+//   npm run qr                                                                    chú rể: source/gift/vietqr-original.jpg -> src/assets/gift/gift-qr.png
+//   npm run qr -- source/gift/co-dau.jpg --out=src/assets/gift/gift-qr-bride.png  mã của cô dâu
 // Vị trí mã được tìm bằng chính bộ đọc mã QR (như điện thoại), nên ảnh bố cục thế nào cũng được.
 // Ra ảnh PNG vuông: mã + viền trắng rộng 4 mô-đun (vùng yên tĩnh để ứng dụng ngân hàng quét được).
 import fs from 'node:fs/promises'
@@ -9,7 +9,7 @@ import sharp from 'sharp'
 
 const args = process.argv.slice(2)
 const src = args.find((a) => !a.startsWith('--')) ?? 'source/gift/vietqr-original.jpg'
-const out = args.find((a) => a.startsWith('--out='))?.slice(6) ?? 'public/gift-qr.png'
+const out = args.find((a) => a.startsWith('--out='))?.slice(6) ?? 'src/assets/gift/gift-qr.png'
 
 const { data, info } = await sharp(src).rotate().ensureAlpha().raw().toBuffer({ resolveWithObject: true })
 const code = jsQR(new Uint8ClampedArray(data), info.width, info.height)
